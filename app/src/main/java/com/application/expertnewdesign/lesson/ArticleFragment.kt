@@ -11,6 +11,7 @@ import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.Video
 import com.application.expertnewdesign.lesson.article.VideoFragment
+import com.github.barteksc.pdfviewer.util.FitPolicy
 import kotlinx.android.synthetic.main.article_fragment.*
 import java.io.File
 import java.lang.StringBuilder
@@ -46,7 +47,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.SetHeight{
                 R.id.toTest->{
                     val articleFragment = activity!!.supportFragmentManager.findFragmentByTag("article")
                     activity!!.supportFragmentManager.beginTransaction().run{
-                        add(R.id.fragment_container, TestFragment(), "test")
+                        add(R.id.fragment_container, TestFragment(path), "test")
                         hide(articleFragment!!).addToBackStack("lesson_stack")
                         commit()
                     }
@@ -72,13 +73,13 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.SetHeight{
             }
             true
         }
-        val dir = StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("article1.pdf").toString()
-        pdfView.fromFile(File(dir)).load()
-        /*playlist = JsonHelper(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("videos.json").toString()).listVideo
+        val dir = StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("article.pdf").toString()
+        pdfView.fromFile(File(dir)).spacing(0).pageFitPolicy(FitPolicy.WIDTH).load()
+        playlist = JsonHelper(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("videos.json").toString()).listVideo
         playlistSize = playlist!!.size
         progressBar.max = playlistSize!!
         getPagerAdapter()
-        tabs.setupWithViewPager(viewPager)*/
+        tabs.setupWithViewPager(viewPager)
         listeners()
     }
 

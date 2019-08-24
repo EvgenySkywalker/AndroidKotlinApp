@@ -24,10 +24,11 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import android.R.attr.path
 import kotlinx.android.synthetic.main.loading_fragment.*
+import retrofit2.http.Query
 import java.io.FileInputStream
+import java.io.InputStream
 import java.nio.file.Files.isDirectory
-
-
+import java.util.zip.ZipEntry
 
 interface LessonAPI {
     @GET
@@ -100,38 +101,19 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<Respon
 
     override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
         if(response.isSuccessful){
-            loading_stat.text = "Распаковка данных..."
-            /*val zipFile = ZipInputStream(response.body().byteStream())
 
             val SDPath = context!!.getExternalFilesDir(null)
             val path = "$SDPath$lessonPath/"
-            val dir = File(path)
-            dir.mkdirs()
-            var entry = zipFile.nextEntry
-            zipFile.closeEntry()
-            entry = zipFile.nextEntry
-            while (entry != null){
-                val unzipPath = path + entry.name.substring(entry.name.indexOf("\\")+1)
-                if (entry.isDirectory) {
-                    val unzipFile = File(unzipPath)
-                    if (!unzipFile.isDirectory) {
-                        unzipFile.mkdirs()
-                    }
-                }else {
-                    val fout = FileOutputStream(unzipPath)
-                    try {
-                        var c = zipFile.read()
-                        while (c != -1) {
-                            fout.write(c)
-                            c = zipFile.read()
-                        }
-                        zipFile.closeEntry()
-                    } finally {
-                        fout.close()
-                    }
-                }
-                entry = zipFile.nextEntry
-            }*/
+
+            val fileDir = File(path)
+            fileDir.mkdirs()
+
+            loadFile(response.body().byteStream(), path)
+
+            val zipFile = File(path+"lesson.zip")
+            zipFile.unzipLesson(fileDir)
+            zipFile.delete()
+
             fragmentManager!!.beginTransaction().run {
                 add(R.id.fragment_container, ArticleFragment("$lessonPath/"), "article")
                 hide(fragmentManager!!.findFragmentByTag("navigation")!!)
@@ -161,5 +143,37 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<Respon
 
         val call = lessonAPI.loadLesson(StringBuilder("getLesson?name=").append(lessonPath).toString())
         call.enqueue(this)
+    }
+
+    fun loadFile(byteStream: InputStream, path: String){
+        val zipPath = path+"lesson.zip"
+        val fout = FileOutputStream(zipPath)
+        try {
+            var c = byteStream.read()
+            while (c != -1) {
+                fout.write(c)
+                c = byteStream.read()
+            }
+        } finally {
+            fout.close()
+        }
+    }
+
+    fun File.unzipLesson(dest : File){
+        fun ZipEntry.is_directory() : Boolean{
+            return name.endsWith("\\")
+        }
+
+        ZipFile(this).use { zipFile ->
+            zipFile.entries().asSequence().forEach { entry ->
+                if(!entry.is_directory()){
+                    zipFile.getInputStream(entry).use{ entryStream ->
+                        File(dest, entry.name.split("\\").last()).outputStream().use { fileStream ->
+                            entryStream.copyTo(fileStream)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
