@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#EAEAEA">
+
+    <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/Widget.AppCompat.Toolbar">
+
+        <androidx.appcompat.widget.Toolbar
+                android:id="@+id/navigationToolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:background="#434343"
+                android:elevation="2dp">
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                       android:id="@+id/navigationBack"
+                       android:layout_width="wrap_content"
+                       android:layout_height="wrap_content"
+                       android:src="@drawable/ic_action_back"
+                       android:background="@color/colorAccent"/>
+
+    </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/recyclerView"
+                                               app:layoutManager="LinearLayoutManager"
+                                               android:layout_width="match_parent"
+                                               android:layout_height="match_parent"
+                                               android:background="#737373"
+                                               app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

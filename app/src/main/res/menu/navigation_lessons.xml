@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--Example
+    <item android:id="@+id/toTest"
+          app:showAsAction="ifRoom"
+          android:icon="@drawable/ic_action_test"
+          android:title="back"/>-->
+</menu>
