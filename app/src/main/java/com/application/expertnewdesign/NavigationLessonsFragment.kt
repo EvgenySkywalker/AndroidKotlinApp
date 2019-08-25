@@ -85,7 +85,7 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
             override fun onItemClick(view: View, position: Int) {
                 lessonPath = StringBuilder("/").append(currentSubject!!.name.replace(' ', '+'))
                     .append("/").append(currentTopic!!.name.replace(' ', '+'))
-                    .append("/").append(currentTopic!!.lessonList[position].name.replace(' ', '+'))
+                    .append("/").append(currentTopic!!.lessonList.sortedBy { it.name }[position].name.replace(' ', '+'))
                     .toString()
                 openLesson()
             }

@@ -23,6 +23,7 @@ import java.lang.StringBuilder
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import android.R.attr.path
+import android.view.View.GONE
 import kotlinx.android.synthetic.main.loading_fragment.*
 import retrofit2.http.Query
 import java.io.FileInputStream
@@ -67,6 +68,8 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
     override fun onFailure(call: Call<MetadataNavigation>, t: Throwable) {
         t.printStackTrace()
+        progressBarLoading.visibility = GONE
+        loading_stat.text = "RIP backend"
     }
 
     fun getMetadata() {
@@ -122,7 +125,7 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<Respon
                 remove(fragmentManager!!.findFragmentByTag("lesson_loading")!!)
                 commit()
             }
-            activity!!.nav_view.visibility = View.GONE
+            activity!!.nav_view.visibility = GONE
         }else{
             println(response.errorBody().string())
         }
