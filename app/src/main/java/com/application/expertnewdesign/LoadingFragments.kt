@@ -23,6 +23,7 @@ import java.lang.StringBuilder
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import android.R.attr.path
+import android.os.AsyncTask
 import android.view.View.GONE
 import kotlinx.android.synthetic.main.loading_fragment.*
 import retrofit2.http.Query
@@ -91,6 +92,49 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
 class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<ResponseBody> {
 
+    inner class UnzipTask: AsyncTask<String, Int, File>(){
+
+        override fun doInBackground(vararg path: String?): File {
+            val fileDir = File(path[0]!!)
+            val zipFile = File(path[0]+"lesson.zip")
+            zipFile.unzipLesson(fileDir)
+            return zipFile
+        }
+
+        override fun onPostExecute(file: File) {
+            file.delete()
+            fragmentManager!!.beginTransaction().run {
+                add(R.id.fragment_container, ArticleFragment("$lessonPath/"), "article")
+                hide(fragmentManager!!.findFragmentByTag("navigation")!!)
+                addToBackStack("lesson_stack")
+                commit()
+            }
+            fragmentManager!!.beginTransaction().run{
+                remove(fragmentManager!!.findFragmentByTag("lesson_loading")!!)
+                commit()
+            }
+            activity!!.nav_view.visibility = GONE
+        }
+
+        fun File.unzipLesson(dest : File){
+            fun ZipEntry.is_directory() : Boolean{
+                return name.endsWith("/")
+            }
+
+            ZipFile(this).use { zipFile ->
+                zipFile.entries().asSequence().forEach { entry ->
+                    if(!entry.is_directory()){
+                        zipFile.getInputStream(entry).use{ entryStream ->
+                            File(dest, entry.name.split("/").last()).outputStream().use { fileStream ->
+                                entryStream.copyTo(fileStream)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.loading_fragment, container, false)
     }
@@ -102,6 +146,8 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<Respon
 
     override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
         if(response.isSuccessful){
+            progressBarLoading.visibility = GONE
+            loading_stat.text = "Распаковка..."
 
             val SDPath = context!!.getExternalFilesDir(null)
             val path = "$SDPath$lessonPath/"
@@ -111,7 +157,8 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<Respon
 
             loadFile(response.body().byteStream(), path)
 
-            val zipFile = File(path+"lesson.zip")
+            UnzipTask().execute(path)
+            /*val zipFile = File(path+"lesson.zip")
             zipFile.unzipLesson(fileDir)
             zipFile.delete()
 
@@ -125,9 +172,11 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<Respon
                 remove(fragmentManager!!.findFragmentByTag("lesson_loading")!!)
                 commit()
             }
-            activity!!.nav_view.visibility = GONE
+            activity!!.nav_view.visibility = GONE*/
         }else{
             println(response.errorBody().string())
+            progressBarLoading.visibility = GONE
+            loading_stat.text = "Ошибка скачивания!"
         }
     }
 
