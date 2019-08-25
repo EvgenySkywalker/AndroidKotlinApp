@@ -80,33 +80,33 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.SetHeight{
         //Без сервера
         //pdfView.fromAsset("lesson.pdf") .spacing(0).pageFitPolicy(FitPolicy.WIDTH).load()
         //playlist = JsonHelper(activity!!.assets.locales[0]).listVideo
-        progressBar.max = playlist!!.size
-        if(progressBar.max == 1){
-            progressBar.visibility = GONE
-        }
-        getPagerAdapter()
-        tabs.setupWithViewPager(viewPager)
-        listeners()
-    }
-
-    private fun listeners(){
-        viewPager.addOnPageChangeListener(object: ViewPager.OnPageChangeListener{
-            override fun onPageSelected(position: Int) {
-                progressBar.progress += (position-lastPage)
-                lastPage = position
-            }
-
-            override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
-
-            }
-
-            override fun onPageScrollStateChanged(state: Int) {
-
-            }
-        })
+        setPlaylist()
         articleBack.setOnClickListener {
             activity!!.onBackPressed()
         }
+    }
+
+    private fun setPlaylist(){
+            progressBar.max = playlist!!.size
+            if (progressBar.max <= 1) {
+                progressBar.visibility = GONE
+            }
+            getPagerAdapter()
+            tabs.setupWithViewPager(viewPager)
+            viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+                override fun onPageSelected(position: Int) {
+                    progressBar.progress += (position - lastPage)
+                    lastPage = position
+                }
+
+                override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+
+                }
+
+                override fun onPageScrollStateChanged(state: Int) {
+
+                }
+            })
     }
 
     private fun getPagerAdapter(){

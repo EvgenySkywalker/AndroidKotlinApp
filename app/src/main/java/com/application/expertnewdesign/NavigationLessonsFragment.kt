@@ -57,10 +57,10 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
 
     fun showSubjects(){
         navigationBack.visibility = GONE
-        val customAdapter = CustomAdapter(context!!, subjectList)
+        val customAdapter = CustomAdapter(context!!, subjectList.sortedBy { it.name })
         customAdapter.setOnItemClickListener(object : CustomAdapter.OnItemClickListener {
             override fun onItemClick(view: View, position: Int) {
-                currentSubject = subjectList[position]
+                currentSubject = subjectList.sortedBy { it.name }[position]
                 showTopics()
             }
         })
@@ -68,10 +68,10 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
     }
 
     fun showTopics(){
-        val customAdapter = CustomAdapter(context!!, currentSubject!!.topicList)
+        val customAdapter = CustomAdapter(context!!, currentSubject!!.topicList.sortedBy { it.name })
         customAdapter.setOnItemClickListener(object : CustomAdapter.OnItemClickListener {
             override fun onItemClick(view: View, position: Int) {
-                currentTopic = currentSubject!!.topicList[position]
+                currentTopic = currentSubject!!.topicList.sortedBy { it.name }[position]
                 showLessons()
             }
         })
@@ -80,7 +80,7 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
     }
 
     fun showLessons(){
-        val customAdapter = CustomAdapter(context!!, currentTopic!!.lessonList)
+        val customAdapter = CustomAdapter(context!!, currentTopic!!.lessonList.sortedBy { it.name })
         customAdapter.setOnItemClickListener(object : CustomAdapter.OnItemClickListener {
             override fun onItemClick(view: View, position: Int) {
                 lessonPath = StringBuilder("/").append(currentSubject!!.name.replace(' ', '+'))

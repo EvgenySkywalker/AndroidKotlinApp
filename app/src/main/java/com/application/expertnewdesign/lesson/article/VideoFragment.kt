@@ -46,9 +46,4 @@ class VideoFragment (val code: String): Fragment(){
         if (!visible && initializedYouTubePlayer != null)
             initializedYouTubePlayer!!.pause()
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        video.release()
-    }
 }

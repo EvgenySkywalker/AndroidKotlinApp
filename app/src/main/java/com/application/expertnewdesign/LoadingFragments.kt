@@ -40,9 +40,9 @@ interface MetadataAPI {
     fun loadMetadata(): Call<MetadataNavigation>
 }
 
-class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
+val BASE_URL: String = "http://35.207.89.62:8080/"
 
-    private val BASE_URL: String = "http://172.18.10.45:8080/"
+class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.loading_fragment, container, false)
@@ -87,8 +87,6 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 }
 
 class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<ResponseBody> {
-
-    private val BASE_URL: String = "http://172.18.10.45:8080/"
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.loading_fragment, container, false)
@@ -161,14 +159,14 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<Respon
 
     fun File.unzipLesson(dest : File){
         fun ZipEntry.is_directory() : Boolean{
-            return name.endsWith("\\")
+            return name.endsWith("/")
         }
 
         ZipFile(this).use { zipFile ->
             zipFile.entries().asSequence().forEach { entry ->
                 if(!entry.is_directory()){
                     zipFile.getInputStream(entry).use{ entryStream ->
-                        File(dest, entry.name.split("\\").last()).outputStream().use { fileStream ->
+                        File(dest, entry.name.split("/").last()).outputStream().use { fileStream ->
                             entryStream.copyTo(fileStream)
                         }
                     }
