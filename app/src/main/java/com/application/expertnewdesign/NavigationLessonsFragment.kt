@@ -4,10 +4,12 @@ import android.os.Bundle
 import android.view.*
 import android.view.View.*
 import androidx.fragment.app.Fragment
+import com.application.expertnewdesign.lesson.ArticleFragment
 import com.application.expertnewdesign.statistic.CustomAdapter
 import com.application.expertnewdesign.statistic.MetadataNavigation
 import com.application.expertnewdesign.statistic.Subject
 import com.application.expertnewdesign.statistic.Topic
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.navigation_lessons_fragment.*
 import java.lang.StringBuilder
 
@@ -39,6 +41,18 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
             addToBackStack("loading")
             commit()
         }
+        //Без сервера
+        /*fragmentManager!!.beginTransaction().run {
+            add(R.id.fragment_container, ArticleFragment(""), "article")
+            hide(fragmentManager!!.findFragmentByTag("navigation")!!)
+            addToBackStack("lesson_stack")
+            commit()
+        }
+        fragmentManager!!.beginTransaction().run{
+            remove(fragmentManager!!.findFragmentByTag("lesson_loading")!!)
+            commit()
+        }
+        activity!!.nav_view.visibility = GONE*/
     }
 
     fun showSubjects(){

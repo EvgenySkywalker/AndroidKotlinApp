@@ -11,9 +11,9 @@ import kotlinx.android.synthetic.main.navigation_lessons_fragment.*
 class MainActivity : AppCompatActivity() {
 
     var navigationLessonsFragment: NavigationLessonsFragment? = null
-    var historyFragment: NavigationLessonsFragment? = null
+    //var historyFragment: NavigationLessonsFragment? = null
     var chatFragment: NavigationLessonsFragment? = null
-    var profileFragment: NavigationLessonsFragment? = null
+    //var profileFragment: NavigationLessonsFragment? = null
 
     private val onNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@OnNavigationItemSelectedListener false
             }
-            R.id.navigation_history -> {
+            /*R.id.navigation_history -> {
                 if(historyFragment != null) {
                     supportFragmentManager.beginTransaction().run {
                         hide(navigationLessonsFragment!!)
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
                     return@OnNavigationItemSelectedListener true
                 }
                 return@OnNavigationItemSelectedListener false
-            }
+            }*/
             R.id.navigation_chat -> {
                 if(chatFragment != null) {
                     supportFragmentManager.beginTransaction().run {
@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@OnNavigationItemSelectedListener false
             }
-            R.id.navigation_profile -> {
+            /*R.id.navigation_profile -> {
                 if(profileFragment != null) {
                     supportFragmentManager.beginTransaction().run {
                         hide(navigationLessonsFragment!!)
@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
                     return@OnNavigationItemSelectedListener true
                 }
                 return@OnNavigationItemSelectedListener false
-            }
+            }*/
         }
         false
     }

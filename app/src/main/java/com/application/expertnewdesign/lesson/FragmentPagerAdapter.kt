@@ -3,10 +3,9 @@ package com.application.expertnewdesign.lesson
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
-import com.application.expertnewdesign.Video
 import com.application.expertnewdesign.lesson.article.VideoFragment
 
-class SampleFragmentPagerAdapter(private val listVideo: List<Video>, private val fm: FragmentManager) : FragmentPagerAdapter(fm) {
+class SampleFragmentPagerAdapter(private val listVideo: List<String>, private val fm: FragmentManager) : FragmentPagerAdapter(fm) {
 
     private var fragmentsList: MutableList<Fragment>? = null
 
@@ -15,11 +14,11 @@ class SampleFragmentPagerAdapter(private val listVideo: List<Video>, private val
     }
 
     override fun getItem(position: Int): Fragment {
-        return VideoFragment(listVideo[position].code)
+        return VideoFragment(listVideo[position])
     }
 
     override fun getPageTitle(position: Int): CharSequence? {
-        return listVideo[position].name
+        return listVideo[position]
     }
 
     fun removeFragments(){

@@ -11,6 +11,8 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
 import kotlinx.android.synthetic.main.video_fragment.*
 
+
+
 class VideoFragment (val code: String): Fragment(){
 
     interface SetHeight{
@@ -43,5 +45,10 @@ class VideoFragment (val code: String): Fragment(){
         super.setMenuVisibility(visible)
         if (!visible && initializedYouTubePlayer != null)
             initializedYouTubePlayer!!.pause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        video.release()
     }
 }

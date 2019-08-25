@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.ViewPager
 import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.R
-import com.application.expertnewdesign.Video
 import com.application.expertnewdesign.lesson.article.VideoFragment
 import com.github.barteksc.pdfviewer.util.FitPolicy
 import kotlinx.android.synthetic.main.article_fragment.*
@@ -28,7 +27,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.SetHeight{
         }
     }
 
-    private var playlist: List<Video>? = null
+    private var playlist: List<String>? = null
 
     var done: Boolean = false
     var lastPage: Int = 0
@@ -65,7 +64,9 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.SetHeight{
                     getPagerAdapter()
                     it.isVisible = false
                     articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
-                    progressBar.visibility = VISIBLE
+                    if(progressBar.max > 1){
+                        progressBar.visibility = VISIBLE
+                    }
                 }
                 else->{
                     super.onOptionsItemSelected(it)
@@ -76,8 +77,13 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.SetHeight{
         val dir = StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("article.pdf").toString()
         pdfView.fromFile(File(dir)).spacing(0).pageFitPolicy(FitPolicy.WIDTH).load()
         playlist = JsonHelper(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("videos.json").toString()).listVideo
-        playlistSize = playlist!!.size
-        progressBar.max = playlistSize!!
+        //Без сервера
+        //pdfView.fromAsset("lesson.pdf") .spacing(0).pageFitPolicy(FitPolicy.WIDTH).load()
+        //playlist = JsonHelper(activity!!.assets.locales[0]).listVideo
+        progressBar.max = playlist!!.size
+        if(progressBar.max == 1){
+            progressBar.visibility = GONE
+        }
         getPagerAdapter()
         tabs.setupWithViewPager(viewPager)
         listeners()

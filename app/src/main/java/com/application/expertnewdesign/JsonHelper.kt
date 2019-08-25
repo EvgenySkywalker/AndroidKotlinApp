@@ -11,14 +11,14 @@ class JsonHelper(private val path: String){
     private val reader: BufferedReader
         get() = File(path).reader(Charsets.UTF_8).buffered()
 
-    val listVideo: List<Video>
+    val listVideo: List<String>
         get() = getVideoList()
 
     val listSubject: List<Subject>
         get() = getSubjectList()
 
-    private fun getVideoList(): List<Video>{
-        val collectionType = object : TypeToken<List<Video>>() {}.type
+    private fun getVideoList(): List<String>{
+        val collectionType = object : TypeToken<List<String>>() {}.type
         return Gson().fromJson(reader, collectionType)
     }
 

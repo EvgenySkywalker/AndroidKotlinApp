@@ -42,8 +42,7 @@ class CustomAdapter(context: Context, private val items: List<Statistic>) :
         }
         if(item is Lesson){
             holder.title.text = item.name
-            holder.subtitle.visibility = GONE
-            //holder.subtitle.text = StringBuilder().append(item.description).toString()
+            holder.subtitle.text = StringBuilder().append(item.description).toString()
         }
     }
 

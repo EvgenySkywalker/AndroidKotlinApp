@@ -6,19 +6,19 @@
             android:icon="@drawable/ic_navigation_lessons"
             android:title="Уроки"/>
 
-    <item
+    <!--<item
             android:id="@+id/navigation_history"
             android:icon="@drawable/ic_navigation_history"
-            android:title="История"/>
+            android:title="История"/>-->
 
     <item
             android:id="@+id/navigation_chat"
             android:icon="@drawable/ic_navigation_chat"
             android:title="Чат"/>
 
-    <item
+    <!--<item
             android:id="@+id/navigation_profile"
             android:icon="@drawable/ic_navigation_profile"
-            android:title="Профиль"/>
+            android:title="Профиль"/>-->
 
 </menu>
