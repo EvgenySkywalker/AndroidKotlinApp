@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.question.*
@@ -26,7 +27,7 @@ class TestFragment(val path: String) : Fragment(){
     }
 
     private fun setTest() {
-        val file = File(path, "questions.json")
+        val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
 
         val meta = Json(JsonConfiguration.Stable).parse(QuestionMetadata.serializer().list, file.readText())
 
