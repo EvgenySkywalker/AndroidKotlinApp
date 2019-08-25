@@ -6,8 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.application.expertnewdesign.R
-import com.application.expertnewdesign.question.test
+import com.application.expertnewdesign.question.*
 import kotlinx.android.synthetic.main.test_fragment.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.list
+import java.io.File
+import java.lang.Exception
 
 class TestFragment(val path: String) : Fragment(){
 
@@ -21,12 +26,25 @@ class TestFragment(val path: String) : Fragment(){
     }
 
     private fun setTest() {
-        /*val file = File(this.filesDir, "QuestionsPack.xml")
-        file.delete()
-        file.createNewFile()
-        file.bufferedWriter().write(BufferedReader(InputStreamReader(assets.open("QuestionsPack.xml"))).readText())
-        val str = file.bufferedReader().readLine()*/
-        scrollView.addView(test(activity!!))
+        val file = File(path, "questions.json")
+
+        val meta = Json(JsonConfiguration.Stable).parse(QuestionMetadata.serializer().list, file.readText())
+
+        val questions = emptyList<Question>().toMutableList()
+
+        meta.forEach { metaQuestion ->
+            questions.add(
+                when(metaQuestion.questionType){
+                    "SingleAnswerQuestion" -> SingleAnswerQuestion(activity!!, metaQuestion.questionBase as SingleAnswerQuestionBase)
+                    "MultipleAnswerQuestion" -> MultipleAnswerQuestion(activity!!, metaQuestion.questionBase as MultipleAnswerQuestionBase)
+                    else -> throw Exception("Unknown question type")
+                }
+            )
+        }
+
+        val questionPack = QuestionPack(activity!!, questions.toList())
+
+        scrollView.addView(questionPack)
         testBack.setOnClickListener {
             activity!!.onBackPressed()
         }

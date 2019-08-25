@@ -6,6 +6,8 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.File
 import java.lang.Exception
+import kotlinx.serialization.*
+import kotlinx.serialization.internal.SerialClassDescImpl
 
 const val DEFAULT_TEXT_SIZE = 16f
 
@@ -340,8 +342,9 @@ abstract class QuestionBase(val questionText: String) {
 }
 
 //Вопрос с единственным правильным вариантом ответа
+@Serializable
 class SingleAnswerQuestionBase(questionText: String = "", val correctAnswer : String = "",
-                               val otherOptions : List<String> = emptyList()) : QuestionBase(questionText){
+                               val incorrectAnswers : List<String> = emptyList()) : QuestionBase(questionText){
 
     override fun toXML(file : File, spacing : Int) {
         //Формируем отступ
@@ -354,18 +357,59 @@ class SingleAnswerQuestionBase(questionText: String = "", val correctAnswer : St
         file.appendText("$tabs\t${XML.Fields.correctAnswer.openTag}$correctAnswer${XML.Fields.correctAnswer.closeTag}\n")
 
         //Неправильные ответы
-        for(option in otherOptions)
+        for(option in incorrectAnswers)
             file.appendText("$tabs\t${XML.Fields.wrongAnswer.openTag}$option${XML.Fields.wrongAnswer.closeTag}\n")
 
         //Закрывающий тэг
         file.appendText("$tabs${XML.Fields.SingleAnswerQuestion.closeTag}\n")
     }
 
+
+    @Serializer(forClass = SingleAnswerQuestionBase::class) companion object : KSerializer<SingleAnswerQuestionBase> {
+        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("SingleAnswerQuestion") {
+            init {
+                addElement("questionText")
+                addElement("correctAnswer")
+                addElement("incorrectAnswers")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: SingleAnswerQuestionBase) {
+            val compositeOutput = encoder.beginStructure(descriptor)
+            compositeOutput.encodeStringElement(descriptor, 0, obj.questionText)
+            compositeOutput.encodeStringElement(descriptor, 1, obj.correctAnswer)
+            compositeOutput.encodeSerializableElement( descriptor, 2, String.serializer().list, obj.incorrectAnswers)
+            compositeOutput.endStructure(descriptor)
+        }
+
+        override fun deserialize(decoder: Decoder): SingleAnswerQuestionBase {
+            val dec: CompositeDecoder = decoder.beginStructure(descriptor)
+            var questionText: String? = null
+            var correctAnswer: String? = null
+            var incorrectAnswers: List<String>? = null
+            loop@ while (true) {
+                when (val i = dec.decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> questionText = dec.decodeStringElement(descriptor, i)
+                    1 -> correctAnswer = dec.decodeStringElement(descriptor, i)
+                    2 -> incorrectAnswers = dec.decodeSerializableElement(descriptor, i, String.serializer().list)
+                    else -> throw SerializationException("Unknown index $i")
+                }
+            }
+            dec.endStructure(descriptor)
+            return SingleAnswerQuestionBase(
+                questionText ?: throw MissingFieldException("questionText"),
+                correctAnswer ?: throw MissingFieldException("correctAnswer"),
+                incorrectAnswers ?: throw MissingFieldException("incorrectAnswers")
+            )
+        }
+    }
 }
 
 //Вопрос с множеством правильных вариантов ответа
+@Serializable
 class MultipleAnswerQuestionBase(questionText: String = "", var correctAnswers : List<String> = emptyList(),
-                                 var otherOptions : List<String> = emptyList()) : QuestionBase(questionText){
+                                 var incorrectAnswers : List<String> = emptyList()) : QuestionBase(questionText){
 
     override fun toXML(file : File, spacing : Int) {
         //Формируем отступ
@@ -379,13 +423,111 @@ class MultipleAnswerQuestionBase(questionText: String = "", var correctAnswers :
             file.appendText("$tabs\t${XML.Fields.correctAnswer.openTag}$correctAnswer${XML.Fields.correctAnswer.closeTag}\n")
 
         //Неправильные ответы
-        for(option in otherOptions)
+        for(option in incorrectAnswers)
             file.appendText("$tabs\t${XML.Fields.wrongAnswer.openTag}$option${XML.Fields.wrongAnswer.closeTag}\n")
 
         //Закрывающий тэг
         file.appendText("$tabs${XML.Fields.MultipleAnswerQuestion.closeTag}\n")
     }
 
+
+    @Serializer(forClass = MultipleAnswerQuestionBase::class) companion object : KSerializer<MultipleAnswerQuestionBase>{
+        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("MultipleAnswerQuestion") {
+            init {
+                addElement("questionText")
+                addElement("correctAnswers")
+                addElement("incorrectAnswers")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: MultipleAnswerQuestionBase) {
+            val compositeOutput = encoder.beginStructure(descriptor)
+            compositeOutput.encodeStringElement(descriptor, 0, obj.questionText)
+            compositeOutput.encodeSerializableElement(descriptor, 1, String.serializer().list, obj.correctAnswers)
+            compositeOutput.encodeSerializableElement(descriptor, 1, String.serializer().list, obj.incorrectAnswers)
+            compositeOutput.endStructure(descriptor)
+        }
+
+        override fun deserialize(decoder: Decoder): MultipleAnswerQuestionBase {
+            val dec: CompositeDecoder = decoder.beginStructure(descriptor)
+            var questionText : String? = null
+            var correctAnswers : List<String>? = null
+            var incorrectAnswers : List<String>? = null
+
+            loop@ while (true) {
+                when (val i = dec.decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> questionText = dec.decodeStringElement(descriptor, i)
+                    1 -> correctAnswers = dec.decodeSerializableElement(descriptor, i, String.serializer().list)
+                    2 -> incorrectAnswers = dec.decodeSerializableElement(descriptor, i, String.serializer().list)
+                    else -> throw SerializationException("Unknown index $i")
+                }
+            }
+            dec.endStructure(descriptor)
+
+            return MultipleAnswerQuestionBase(
+                questionText ?: throw MissingFieldException("questionText"),
+                correctAnswers ?: throw MissingFieldException("correctAnswers"),
+                incorrectAnswers ?: throw MissingFieldException("incorrectAnswers")
+
+            )
+        }
+    }
+}
+
+@Serializable
+class QuestionMetadata(val questionType : String = "", val questionBase: QuestionBase){
+    @Serializer(forClass = QuestionMetadata::class) companion object : KSerializer<QuestionMetadata>{
+        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("BinaryPayload") {
+            init {
+                addElement("questionType")
+                addElement("questionBase")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: QuestionMetadata) {
+            val compositeOutput = encoder.beginStructure(descriptor)
+            compositeOutput.encodeStringElement(descriptor, 0, obj.questionType)
+            when(obj.questionType){
+                "SingleAnswerQuestion" ->
+                    compositeOutput.encodeSerializableElement(descriptor, 1,
+                        SingleAnswerQuestionBase.serializer(), obj.questionBase as SingleAnswerQuestionBase)
+                "MultipleAnswerQuestion" ->
+                    compositeOutput.encodeSerializableElement(descriptor, 1,
+                        MultipleAnswerQuestionBase.serializer(), obj.questionBase as MultipleAnswerQuestionBase)
+                else -> throw SerializationException("Unknown questionType")
+            }
+            compositeOutput.endStructure(descriptor)
+        }
+
+        override fun deserialize(decoder: Decoder): QuestionMetadata {
+            val dec: CompositeDecoder = decoder.beginStructure(descriptor)
+            var questionType : String? = null
+            var questionBase : QuestionBase? = null
+
+            loop@ while (true) {
+                when (val i = dec.decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> questionType = dec.decodeStringElement(descriptor, i)
+                    1 -> questionBase = dec.decodeSerializableElement(descriptor, i,
+                        when(questionType){
+                            "SingleAnswerQuestion" -> SingleAnswerQuestionBase.serializer()
+                            "MultipleAnswerQuestion" -> MultipleAnswerQuestionBase.serializer()
+                            null -> throw SerializationException("questionType is yet unknown")
+                            else -> throw SerializationException("Unknown questionType")
+                        }
+                    )
+                    else -> throw SerializationException("Unknown index $i")
+                }
+            }
+            dec.endStructure(descriptor)
+
+            return QuestionMetadata(
+                questionType ?: throw MissingFieldException("questionType"),
+                questionBase ?: throw MissingFieldException("questionBase")
+            )
+        }
+    }
 }
 
 //Вопрос на сопоставление
@@ -415,5 +557,7 @@ class DragQuestionBase(questionText: String = "", var leftColumn: List<String> =
         //Закрывающий тэг
         file.appendText("$tabs${XML.Fields.DragQuestion.closeTag}\n")
     }
+
+
 
 }

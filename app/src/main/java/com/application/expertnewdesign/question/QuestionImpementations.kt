@@ -152,10 +152,10 @@ class QuestionPack(context: Context, private var questions : List<Question>) : L
 class SingleAnswerQuestion(context: Context, questionBase : SingleAnswerQuestionBase)
     : Question(context, questionBase){
 
-    private var options : Array<RadioButton> = Array(questionBase.otherOptions.size + 1) { RadioButton(context) }
+    private var options : Array<RadioButton> = Array(questionBase.incorrectAnswers.size + 1) { RadioButton(context) }
 
     init {
-        val mutableList = questionBase.otherOptions.toMutableList()
+        val mutableList = questionBase.incorrectAnswers.toMutableList()
         mutableList.add(questionBase.correctAnswer)
         mutableList.shuffle()
 
@@ -196,11 +196,11 @@ class SingleAnswerQuestion(context: Context, questionBase : SingleAnswerQuestion
 class MultipleAnswerQuestion(context: Context, questionBase : MultipleAnswerQuestionBase)
     : Question(context, questionBase){
 
-    private val answerList : List<CheckBox> = List(questionBase.correctAnswers.size + questionBase.otherOptions.size) { CheckBox(context) }
+    private val answerList : List<CheckBox> = List(questionBase.correctAnswers.size + questionBase.incorrectAnswers.size) { CheckBox(context) }
 
     init{
         val fullList = questionBase.correctAnswers.toMutableList()
-        fullList.addAll(questionBase.otherOptions)
+        fullList.addAll(questionBase.incorrectAnswers)
         fullList.shuffle()
 
         for(i in (0 until fullList.size)){
