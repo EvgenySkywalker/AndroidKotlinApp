@@ -18,6 +18,15 @@
                 style="@style/Widget.AppCompat.ProgressBar"
                 android:layout_gravity="center"/>
 
+        <ProgressBar
+                android:id="@+id/horizontalProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_gravity="center"
+                android:max="100"
+                android:visibility="gone"/>
+
         <TextView
                 android:id="@+id/loading_stat"
                 android:paddingTop="20dp"

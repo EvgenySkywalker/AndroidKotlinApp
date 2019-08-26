@@ -1,9 +1,9 @@
 package com.application.expertnewdesign.lesson
 
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.*
-import android.view.View.GONE
-import android.view.View.VISIBLE
+import android.view.View.*
 import android.widget.RelativeLayout
 import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.ViewPager
@@ -17,21 +17,12 @@ import java.lang.StringBuilder
 
 class ArticleFragment(val path: String): Fragment(), VideoFragment.SetHeight{
 
-    override fun height(_height: Int) {
-        if(!done) {
-            viewPager.layoutParams.height = _height
-            val params = pdfView.layoutParams as RelativeLayout.LayoutParams
-            params.removeRule(RelativeLayout.BELOW)
-            params.addRule(RelativeLayout.BELOW, R.id.progressBar)
-            pdfView.layoutParams = params
-        }
-    }
-
     private var playlist: List<String>? = null
 
     var done: Boolean = false
     var lastPage: Int = 0
     private var playlistSize: Int? = null
+    var height: Int? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         setHasOptionsMenu(true)
@@ -112,5 +103,36 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.SetHeight{
     private fun getPagerAdapter(){
         viewPager.adapter = SampleFragmentPagerAdapter(playlist!!, childFragmentManager)
         progressBar.progress = 1
+    }
+
+    override fun height(newHeight: Int) {
+        if(!done) {
+            height = newHeight
+            viewPager.layoutParams.height = height!!
+            val params = pdfView.layoutParams as RelativeLayout.LayoutParams
+            params.removeRule(RelativeLayout.BELOW)
+            params.addRule(RelativeLayout.BELOW, R.id.progressBar)
+            pdfView.layoutParams = params
+        }
+    }
+
+    override fun fullScreen(isFullScreen: Boolean) {
+        if(isFullScreen){
+            val params = viewPager.layoutParams as RelativeLayout.LayoutParams
+            params.removeRule(RelativeLayout.BELOW)
+            params.height = ViewGroup.LayoutParams.MATCH_PARENT
+            activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            activity!!.window.decorView.systemUiVisibility =
+                SYSTEM_UI_FLAG_IMMERSIVE
+                    .or(SYSTEM_UI_FLAG_FULLSCREEN
+                        .or(SYSTEM_UI_FLAG_HIDE_NAVIGATION))
+        }else{
+            activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            activity!!.window.decorView.systemUiVisibility = SYSTEM_UI_FLAG_VISIBLE
+            val params = viewPager.layoutParams as RelativeLayout.LayoutParams
+            params.height = height!!
+            params.addRule(RelativeLayout.BELOW, R.id.articleToolbar)
+            viewPager.layoutParams = params
+        }
     }
 }

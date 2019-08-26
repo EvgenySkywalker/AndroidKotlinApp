@@ -145,8 +145,8 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<Respon
     }
 
     override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+        progressBarLoading.visibility = GONE
         if(response.isSuccessful){
-            progressBarLoading.visibility = GONE
             loading_stat.text = "Распаковка..."
 
             val SDPath = context!!.getExternalFilesDir(null)
@@ -175,7 +175,6 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(), Callback<Respon
             activity!!.nav_view.visibility = GONE*/
         }else{
             println(response.errorBody().string())
-            progressBarLoading.visibility = GONE
             loading_stat.text = "Ошибка скачивания!"
         }
     }
