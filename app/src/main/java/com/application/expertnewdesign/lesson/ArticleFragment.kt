@@ -15,13 +15,12 @@ import kotlinx.android.synthetic.main.article_fragment.*
 import java.io.File
 import java.lang.StringBuilder
 
-class ArticleFragment(val path: String): Fragment(), VideoFragment.SetHeight{
+class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
 
     private var playlist: List<String>? = null
 
     var done: Boolean = false
     var lastPage: Int = 0
-    private var playlistSize: Int? = null
     var height: Int? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

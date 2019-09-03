@@ -1,14 +1,23 @@
 package com.application.expertnewdesign
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
+import com.application.expertnewdesign.lesson.ArticleFragment
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.navigation_lessons_fragment.*
+import kotlinx.android.synthetic.main.video_fragment.*
+
 
 class MainActivity : AppCompatActivity() {
+
+    val LESSON_CHANNEL_ID = "loading_lesson"
 
     var navigationLessonsFragment: NavigationLessonsFragment? = null
     //var historyFragment: NavigationLessonsFragment? = null
@@ -70,9 +79,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun init(){
+        createNotificationChannel()
         supportFragmentManager.beginTransaction().run{
             add(R.id.fragment_container, MetadataLoadingFragment(), "metadata_loading")
             commit()
+        }
+    }
+
+    private fun createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "Загрузка"
+            val descriptionText = "Скачивание урока"
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel(LESSON_CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+            }
+            // Register the channel with the system
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
         }
     }
 
@@ -89,6 +116,13 @@ class MainActivity : AppCompatActivity() {
                 return
             }
         }
+        /*if(video != null){
+            if(video.isFullScreen()){
+                val fragment = supportFragmentManager.findFragmentByTag("article") as ArticleFragment
+                fragment.fullScreen(false)
+                video.exitFullScreen()
+            }
+        }*/
         val testFragment = supportFragmentManager.findFragmentByTag("test")
         if(testFragment != null){
             if(testFragment.isVisible){

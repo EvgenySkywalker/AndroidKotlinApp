@@ -1,7 +1,5 @@
 package com.application.expertnewdesign
 
-import android.content.res.AssetManager
-import com.application.expertnewdesign.statistic.Subject
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*

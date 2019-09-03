@@ -19,7 +19,7 @@ import kotlinx.android.synthetic.main.video_fragment.*
 
 class VideoFragment (val code: String): Fragment(){
 
-    interface SetHeight{
+    interface Layout{
         fun height(_height: Int)
         fun fullScreen(isFullScreen: Boolean)
     }

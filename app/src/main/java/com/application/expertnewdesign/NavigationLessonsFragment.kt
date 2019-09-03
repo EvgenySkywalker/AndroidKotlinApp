@@ -1,16 +1,13 @@
 package com.application.expertnewdesign
 
+import android.content.Context
 import android.os.Bundle
 import android.view.*
 import android.view.View.*
 import androidx.fragment.app.Fragment
-import com.application.expertnewdesign.lesson.ArticleFragment
-import com.application.expertnewdesign.statistic.CustomAdapter
-import com.application.expertnewdesign.statistic.MetadataNavigation
-import com.application.expertnewdesign.statistic.Subject
-import com.application.expertnewdesign.statistic.Topic
-import kotlinx.android.synthetic.main.activity_main.*
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.navigation_lessons_fragment.*
+import kotlinx.android.synthetic.main.recycler_view_item.view.*
 import java.lang.StringBuilder
 
 class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
@@ -91,5 +88,62 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
             }
         })
         recyclerView.adapter = customAdapter
+    }
+}
+
+class CustomAdapter(context: Context, private val items: List<Statistic>) :
+    RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
+
+    private var mOnItemClickListener: OnItemClickListener? = null
+
+    interface OnItemClickListener {
+        fun onItemClick(view: View, position: Int)
+    }
+
+    fun setOnItemClickListener(onEntryClickListener: OnItemClickListener) {
+        mOnItemClickListener = onEntryClickListener
+    }
+
+    private val inflater = LayoutInflater.from(context)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = inflater.inflate(R.layout.recycler_view_item, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val item = items[position]
+        if(item is Subject){
+            holder.title.text = item.name
+            holder.subtitle.text = StringBuilder().append("Количество тем: ").append(item.topicList.size).toString()
+        }
+        if(item is Topic){
+            holder.title.text = item.name
+            holder.subtitle.text = StringBuilder().append("Количество тем: ").append(item.lessonList.size).toString()
+        }
+        if(item is Lesson){
+            holder.title.text = item.name
+            holder.subtitle.text = StringBuilder().append(item.description).toString()
+        }
+    }
+
+    override fun getItemCount(): Int {
+        return items.size
+    }
+
+    inner class ViewHolder internal constructor(view: View) : RecyclerView.ViewHolder(view), View.OnClickListener {
+        //val image = view.image
+        val title = view.title
+        val subtitle = view.subtitle
+
+        init {
+            view.setOnClickListener(this)
+        }
+
+        override fun onClick(v: View) {
+            if (mOnItemClickListener != null) {
+                mOnItemClickListener!!.onItemClick(v, layoutPosition)
+            }
+        }
     }
 }
