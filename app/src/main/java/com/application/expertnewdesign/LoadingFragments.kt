@@ -38,6 +38,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import retrofit2.http.Header
 import retrofit2.http.Streaming
 import java.io.*
 import kotlin.concurrent.thread
@@ -48,17 +49,19 @@ import kotlin.math.roundToInt
 interface LessonAPI {
     @GET
     @Streaming
-    fun loadLesson(@Url url: String): Call<ResponseBody>
+    fun loadLesson(@Header("authentication") token: String, @Url url: String): Call<ResponseBody>
 }
 
 interface MetadataAPI {
     @GET("metadata/")
-    fun loadMetadata(): Call<MetadataNavigation>
+    fun loadMetadata(@Header("Authentication") token: String): Call<MetadataNavigation>
 }
 
 val BASE_URL: String = "http://35.207.89.62:8080/"
 
 class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
+
+    private lateinit var token: String
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.loading_fragment, container, false)
@@ -66,6 +69,7 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
     override fun onStart() {
         super.onStart()
+        token = activity!!.intent.getStringExtra("token")!!
         getMetadata()
     }
 
@@ -99,7 +103,7 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
         val metadataAPI = retrofit.create(MetadataAPI::class.java)
 
-        val call = metadataAPI.loadMetadata()
+        val call = metadataAPI.loadMetadata("Token $token")
         call.enqueue(this)
     }
 }
@@ -123,6 +127,7 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
         //if(!lessonFile.exists()) {
             intent = Intent(context, DownloadService::class.java)
             intent.putExtra("path", lessonPath)
+            intent.putExtra("token", activity!!.intent.getStringExtra("token"))
             activity!!.startService(intent)
         /*}else{
             fragmentManager!!.beginTransaction().run {
@@ -224,6 +229,7 @@ class DownloadService : IntentService("Download Service") {
 
     val CHANNEL_ID = "loading_lesson"
     private lateinit var lessonPath: String
+    private lateinit var token: String
     private lateinit var  notificationBuilder: NotificationCompat.Builder
     private lateinit var notificationManager: NotificationManager
     private var totalFileSize: Int = 0
@@ -242,6 +248,7 @@ class DownloadService : IntentService("Download Service") {
         notificationManager.notify(0, notificationBuilder.build())
 
         lessonPath = intent!!.getStringExtra("path")!!
+        token = intent.getStringExtra("token")!!
 
         initDownload()
     }
@@ -254,7 +261,7 @@ class DownloadService : IntentService("Download Service") {
 
         val lessonAPI = retrofit.create(LessonAPI::class.java)
 
-        val request = lessonAPI.loadLesson(StringBuilder("getLesson?name=").append(lessonPath).toString())
+        val request = lessonAPI.loadLesson("Token $token", StringBuilder("getLesson?name=").append(lessonPath).toString())
 
         try {
 
