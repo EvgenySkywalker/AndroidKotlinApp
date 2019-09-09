@@ -1,4 +1,4 @@
-package com.application.expertnewdesign
+package com.application.expertnewdesign.navigation
 
 import android.content.Context
 import android.os.Bundle
@@ -6,14 +6,19 @@ import android.view.*
 import android.view.View.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
+import com.application.expertnewdesign.LessonLoadingFragment
+import com.application.expertnewdesign.MainActivity
+import com.application.expertnewdesign.R
 import kotlinx.android.synthetic.main.navigation_lessons_fragment.*
 import kotlinx.android.synthetic.main.recycler_view_item.view.*
 import java.lang.StringBuilder
+import java.util.*
 
 class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
     val subjectList: List<Subject> = metadata.subjectList
     var currentSubject: Subject? = null
     var currentTopic: Topic? = null
+    var currentLesson: Lesson? = null
     var lessonPath: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -33,7 +38,9 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
 
     fun openLesson(){
         fragmentManager!!.beginTransaction().run{
-            add(R.id.fragment_container, LessonLoadingFragment(lessonPath!!), "lesson_loading")
+            add(
+                R.id.fragment_container,
+                LessonLoadingFragment(lessonPath!!), "lesson_loading")
             hide(fragmentManager!!.findFragmentByTag("navigation")!!)
             addToBackStack("loading")
             commit()
@@ -54,8 +61,11 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
 
     fun showSubjects(){
         navigationBack.visibility = GONE
-        val customAdapter = CustomAdapter(context!!, subjectList.sortedBy { it.name })
-        customAdapter.setOnItemClickListener(object : CustomAdapter.OnItemClickListener {
+        val customAdapter = CustomAdapter(
+            context!!,
+            subjectList.sortedBy { it.name })
+        customAdapter.setOnItemClickListener(object :
+            CustomAdapter.OnItemClickListener {
             override fun onItemClick(view: View, position: Int) {
                 currentSubject = subjectList.sortedBy { it.name }[position]
                 showTopics()
@@ -65,8 +75,11 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
     }
 
     fun showTopics(){
-        val customAdapter = CustomAdapter(context!!, currentSubject!!.topicList.sortedBy { it.name })
-        customAdapter.setOnItemClickListener(object : CustomAdapter.OnItemClickListener {
+        val customAdapter = CustomAdapter(
+            context!!,
+            currentSubject!!.topicList.sortedBy { it.name })
+        customAdapter.setOnItemClickListener(object :
+            CustomAdapter.OnItemClickListener {
             override fun onItemClick(view: View, position: Int) {
                 currentTopic = currentSubject!!.topicList.sortedBy { it.name }[position]
                 showLessons()
@@ -77,12 +90,17 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
     }
 
     fun showLessons(){
-        val customAdapter = CustomAdapter(context!!, currentTopic!!.lessonList.sortedBy { it.name })
-        customAdapter.setOnItemClickListener(object : CustomAdapter.OnItemClickListener {
+        val customAdapter = CustomAdapter(
+            context!!,
+            currentTopic!!.lessonList.sortedBy { it.name })
+        customAdapter.setOnItemClickListener(object :
+            CustomAdapter.OnItemClickListener {
             override fun onItemClick(view: View, position: Int) {
-                lessonPath = StringBuilder("/").append(currentSubject!!.name.replace(' ', '+'))
+                currentLesson = currentTopic!!.lessonList.sortedBy { it.name }[position]
+                lessonPath = StringBuilder("/")
+                    .append(currentSubject!!.name.replace(' ', '+'))
                     .append("/").append(currentTopic!!.name.replace(' ', '+'))
-                    .append("/").append(currentTopic!!.lessonList.sortedBy { it.name }[position].name.replace(' ', '+'))
+                    .append("/").append(currentLesson!!.name.replace(' ', '+'))
                     .toString()
                 openLesson()
             }

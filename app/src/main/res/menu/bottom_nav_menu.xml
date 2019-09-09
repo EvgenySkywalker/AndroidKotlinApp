@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
             android:id="@+id/navigation_lessons"
             android:icon="@drawable/ic_navigation_lessons"
-            android:title="Уроки"/>
+            app:showAsAction="always"
+            android:title=""/>
 
     <!--<item
             android:id="@+id/navigation_history"
@@ -14,11 +15,11 @@
     <item
             android:id="@+id/navigation_chat"
             android:icon="@drawable/ic_navigation_chat"
-            android:title="Чат"/>
+            android:title=""/>
 
-    <!--<item
+    <item
             android:id="@+id/navigation_profile"
             android:icon="@drawable/ic_navigation_profile"
-            android:title="Профиль"/>-->
+            android:title=""/>
 
 </menu>

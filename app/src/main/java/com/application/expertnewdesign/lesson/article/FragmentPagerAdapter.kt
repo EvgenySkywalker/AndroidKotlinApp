@@ -1,9 +1,8 @@
-package com.application.expertnewdesign.lesson
+package com.application.expertnewdesign.lesson.article
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
-import com.application.expertnewdesign.lesson.article.VideoFragment
 
 class SampleFragmentPagerAdapter(private val listVideo: List<String>, private val fm: FragmentManager) : FragmentPagerAdapter(fm) {
 

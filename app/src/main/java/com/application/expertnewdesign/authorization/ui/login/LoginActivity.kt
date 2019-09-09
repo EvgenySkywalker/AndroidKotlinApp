@@ -1,6 +1,5 @@
 package com.application.expertnewdesign.authorization.ui.login
 
-import android.app.Activity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
@@ -10,12 +9,13 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.Button
 import android.widget.EditText
-import android.widget.ProgressBar
 import android.widget.Toast
 import com.application.expertnewdesign.R
 import kotlinx.android.synthetic.main.activity_login.*
+import android.content.Context
+import android.view.inputmethod.InputMethodManager
+
 
 class LoginActivity : AppCompatActivity() {
 
@@ -25,6 +25,8 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_login)
+
+        supportActionBar!!.hide()
 
         loginViewModel = ViewModelProviders.of(this, LoginViewModelFactory(this))
             .get(LoginViewModel::class.java)
@@ -47,16 +49,11 @@ class LoginActivity : AppCompatActivity() {
             val loginResult = it ?: return@Observer
 
             loading.visibility = View.GONE
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(container.windowToken, 0)
             if (loginResult.error != null) {
                 showLoginFailed(loginResult.error)
             }
-            if (loginResult.success != null) {
-                updateUiWithUser(loginResult.success)
-            }
-            setResult(Activity.RESULT_OK)
-
-            //Complete and destroy login activity once successful
-            finish()
         })
 
         username.afterTextChanged {
@@ -90,17 +87,6 @@ class LoginActivity : AppCompatActivity() {
                 loginViewModel.login(username.text.toString(), password.text.toString())
             }
         }
-    }
-
-    private fun updateUiWithUser(model: LoggedInUserView) {
-        val welcome = getString(R.string.welcome)
-        val displayName = model.displayName
-        // TODO : initiate successful logged in experience
-        Toast.makeText(
-            applicationContext,
-            "$welcome $displayName",
-            Toast.LENGTH_LONG
-        ).show()
     }
 
     private fun showLoginFailed(@StringRes errorString: Int) {

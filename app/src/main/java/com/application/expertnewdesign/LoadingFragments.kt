@@ -1,21 +1,17 @@
 package com.application.expertnewdesign
 
-import android.Manifest
 import android.app.IntentService
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.application.expertnewdesign.lesson.ArticleFragment
+import com.application.expertnewdesign.lesson.article.ArticleFragment
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.ResponseBody
@@ -33,31 +29,52 @@ import kotlinx.android.synthetic.main.loading_fragment.*
 import java.util.zip.ZipEntry
 import android.os.Parcel
 import android.os.Parcelable
+import android.view.View.VISIBLE
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.application.expertnewdesign.navigation.MetadataNavigation
+import com.application.expertnewdesign.navigation.NavigationLessonsFragment
+import com.application.expertnewdesign.profile.User
 import retrofit2.http.Header
 import retrofit2.http.Streaming
 import java.io.*
-import kotlin.concurrent.thread
-import kotlin.math.pow
 import kotlin.math.roundToInt
 
 
 interface LessonAPI {
     @GET
     @Streaming
-    fun loadLesson(@Header("authentication") token: String, @Url url: String): Call<ResponseBody>
+    fun loadLesson(@Header("Authorization") token: String, @Url url: String): Call<ResponseBody>
 }
 
 interface MetadataAPI {
     @GET("metadata/")
-    fun loadMetadata(@Header("Authentication") token: String): Call<MetadataNavigation>
+    fun loadMetadata(@Header("Authorization") token: String): Call<MetadataNavigation>
 }
 
 val BASE_URL: String = "http://35.207.89.62:8080/"
+
+class UserDataSending(val user: User): Fragment(){
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(R.layout.loading_fragment, container, false)
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        horizontalProgress.visibility =GONE
+        infinite_loading.visibility = VISIBLE
+
+        loading_stat.text = "Синхронизация..."
+        sendUserData()
+    }
+
+    private fun sendUserData(){
+
+    }
+}
 
 class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
@@ -69,6 +86,8 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
     override fun onStart() {
         super.onStart()
+        horizontalProgress.visibility = GONE
+        infinite_loading.visibility = VISIBLE
         token = activity!!.intent.getStringExtra("token")!!
         getMetadata()
     }
@@ -80,24 +99,39 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
                 remove(fragmentManager!!.findFragmentByTag("metadata_loading")!!)
                 commit()
             }
+            Thread().run{
+                val json = JsonHelper(activity!!.getExternalFilesDir(null).toString())
+                json.toJson(response.body())
+            }
         } else {
-            println(response.errorBody())
+            infinite_loading.visibility = GONE
+            loading_stat.text = "Ошибка запроса"
         }
     }
 
     override fun onFailure(call: Call<MetadataNavigation>, t: Throwable) {
-        t.printStackTrace()
-        horizontalProgress.visibility = GONE
-        loading_stat.text = "404 backend"
+        val file = File(activity!!.getExternalFilesDir(null).toString()+"/metadata.json")
+        if(file.exists()) {
+            val json = JsonHelper(activity!!.getExternalFilesDir(null).toString()+"/metadata.json")
+            fragmentManager!!.beginTransaction().run {
+                add(R.id.fragment_container, NavigationLessonsFragment(json.metadata), "navigation")
+                remove(fragmentManager!!.findFragmentByTag("metadata_loading")!!)
+                commit()
+            }
+        }else{
+            infinite_loading.visibility = GONE
+            loading_stat.text = "Сервер не отвечает"
+        }
+        Toast.makeText(context, "Не удалось подключиться к серверу", Toast.LENGTH_SHORT).show()
     }
 
-    fun getMetadata() {
+    private fun getMetadata() {
         val gson = GsonBuilder()
             .setLenient()
             .create()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BASE_URL)//"http://36.207.89.62:8080/"
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 
@@ -122,28 +156,11 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
         getLesson()
     }
 
-    fun getLesson() {
-        //val lessonFile = File(context!!.getExternalFilesDir(null).toString()+lessonPath, "article.pdf")
-        //if(!lessonFile.exists()) {
+    private fun getLesson() {
             intent = Intent(context, DownloadService::class.java)
             intent.putExtra("path", lessonPath)
             intent.putExtra("token", activity!!.intent.getStringExtra("token"))
             activity!!.startService(intent)
-        /*}else{
-            fragmentManager!!.beginTransaction().run {
-                add(R.id.fragment_container, ArticleFragment("$lessonPath/"), "article")
-                hide(fragmentManager!!.findFragmentByTag("navigation")!!)
-                addToBackStack("lesson_stack")
-                commit()
-            }
-            fragmentManager!!.beginTransaction().run{
-                remove(fragmentManager!!.findFragmentByTag("lesson_loading")!!)
-                commit()
-            }
-            activity!!.runOnUiThread {
-                activity!!.nav_view.visibility = GONE
-            }
-        }*/
     }
 
     fun File.unzipLesson(dest : File){
@@ -197,7 +214,8 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
                         zipFile.delete()
 
                         fragmentManager!!.beginTransaction().run {
-                            add(R.id.fragment_container, ArticleFragment("$lessonPath/"), "article")
+                            add(R.id.fragment_container,
+                                ArticleFragment("$lessonPath/"), "article")
                             hide(fragmentManager!!.findFragmentByTag("navigation")!!)
                             addToBackStack("lesson_stack")
                             commit()

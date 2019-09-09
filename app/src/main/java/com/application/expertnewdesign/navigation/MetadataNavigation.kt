@@ -1,5 +1,9 @@
-package com.application.expertnewdesign
+package com.application.expertnewdesign.navigation
 
+import android.app.Activity
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentActivity
+import com.application.expertnewdesign.profile.ProfileFragment
 import com.google.gson.annotations.SerializedName
 
 class MetadataNavigation(
@@ -30,5 +34,5 @@ class Lesson(
 ): Statistic()
 
 open class Statistic{
-
+    var time: Long = 0
 }

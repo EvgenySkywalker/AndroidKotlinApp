@@ -1,6 +1,7 @@
 package com.application.expertnewdesign.authorization.data
 
 import com.application.expertnewdesign.authorization.data.model.LoggedInUser
+import com.application.expertnewdesign.authorization.ui.login.LoginViewModel
 
 /**
  * Class that requests authentication and user information from the remote data source and
@@ -27,8 +28,8 @@ class LoginRepository(val dataSource: LoginDataSource) {
         dataSource.logout()
     }
 
-    fun login(username: String, password: String){
-        dataSource.login(username, password)
+    fun login(model: LoginViewModel, username: String, password: String){
+        dataSource.login(model, username, password)
     }
 
     private fun setLoggedInUser(loggedInUser: LoggedInUser) {

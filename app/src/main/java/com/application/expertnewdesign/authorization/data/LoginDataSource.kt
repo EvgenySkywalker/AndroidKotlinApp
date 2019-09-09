@@ -1,10 +1,13 @@
 package com.application.expertnewdesign.authorization.data
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.application.expertnewdesign.BASE_URL
 import com.application.expertnewdesign.MainActivity
 import com.application.expertnewdesign.authorization.data.model.LoggedInUser
+import com.application.expertnewdesign.authorization.ui.login.LoginActivity
+import com.application.expertnewdesign.authorization.ui.login.LoginViewModel
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -25,8 +28,7 @@ class LoginDataSource(
     val act: AppCompatActivity
 ) {
 
-    fun login(username: String, password: String) {
-        //try {
+    fun login(model: LoginViewModel, username: String, password: String) {
             val retrofit = Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .build()
@@ -43,17 +45,14 @@ class LoginDataSource(
                         act.startActivity(intent)
                         act.finish()
                     }else{
-                        println("fuck")
+                        model.setLoginError()
                     }
                 }
 
                 override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
-                    println("fuck")
+                    model.setConnectionError()
                 }
             })
-        /*} catch (e: Throwable) {
-
-        }*/
     }
 
     fun logout() {

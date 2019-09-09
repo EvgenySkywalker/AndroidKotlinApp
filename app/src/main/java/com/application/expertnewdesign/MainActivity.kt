@@ -5,24 +5,27 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
-import com.application.expertnewdesign.lesson.ArticleFragment
+import com.application.expertnewdesign.lesson.article.ArticleFragment
+import com.application.expertnewdesign.navigation.NavigationLessonsFragment
+import com.application.expertnewdesign.profile.ProfileFragment
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.navigation_lessons_fragment.*
 import kotlinx.android.synthetic.main.video_fragment.*
+import kotlinx.serialization.json.Json
 
 
 class MainActivity : AppCompatActivity() {
 
     val LESSON_CHANNEL_ID = "loading_lesson"
-
     var navigationLessonsFragment: NavigationLessonsFragment? = null
     //var historyFragment: NavigationLessonsFragment? = null
     var chatFragment: NavigationLessonsFragment? = null
-    //var profileFragment: NavigationLessonsFragment? = null
+    var profileFragment: ProfileFragment? = null
 
     private val onNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
@@ -56,16 +59,17 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@OnNavigationItemSelectedListener false
             }
-            /*R.id.navigation_profile -> {
-                if(profileFragment != null) {
+            R.id.navigation_profile -> {
+                if(profileFragment != null && navigationLessonsFragment != null) {
                     supportFragmentManager.beginTransaction().run {
                         hide(navigationLessonsFragment!!)
+                        show(profileFragment!!)
                         commit()
                     }
                     return@OnNavigationItemSelectedListener true
                 }
                 return@OnNavigationItemSelectedListener false
-            }*/
+            }
         }
         false
     }
@@ -82,6 +86,7 @@ class MainActivity : AppCompatActivity() {
         createNotificationChannel()
         supportFragmentManager.beginTransaction().run{
             add(R.id.fragment_container, MetadataLoadingFragment(), "metadata_loading")
+            add(R.id.fragment_container, ProfileFragment(), "profile")
             commit()
         }
     }
@@ -116,13 +121,14 @@ class MainActivity : AppCompatActivity() {
                 return
             }
         }
-        /*if(video != null){
+        if(video != null){
             if(video.isFullScreen()){
                 val fragment = supportFragmentManager.findFragmentByTag("article") as ArticleFragment
                 fragment.fullScreen(false)
                 video.exitFullScreen()
+                return
             }
-        }*/
+        }
         val testFragment = supportFragmentManager.findFragmentByTag("test")
         if(testFragment != null){
             if(testFragment.isVisible){
@@ -134,5 +140,13 @@ class MainActivity : AppCompatActivity() {
             nav_view.visibility = VISIBLE
         }
         super.onBackPressed()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Thread().run{
+            val json = JsonHelper(getExternalFilesDir(null).toString())
+            json.toJson(profileFragment!!.user)
+        }
     }
 }

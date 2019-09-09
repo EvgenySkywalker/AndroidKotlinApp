@@ -1,4 +1,4 @@
-package com.application.expertnewdesign.lesson
+package com.application.expertnewdesign.lesson.article
 
 import android.content.pm.ActivityInfo
 import android.os.Bundle
@@ -6,18 +6,25 @@ import android.view.*
 import android.view.View.*
 import android.widget.RelativeLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.viewpager.widget.ViewPager
 import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.R
-import com.application.expertnewdesign.lesson.article.VideoFragment
+import com.application.expertnewdesign.lesson.test.TestFragment
+import com.application.expertnewdesign.navigation.Lesson
+import com.application.expertnewdesign.navigation.NavigationLessonsFragment
+import com.application.expertnewdesign.navigation.Statistic
+import com.application.expertnewdesign.profile.ProfileFragment
 import com.github.barteksc.pdfviewer.util.FitPolicy
 import kotlinx.android.synthetic.main.article_fragment.*
 import java.io.File
 import java.lang.StringBuilder
+import java.util.*
 
 class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
 
     private var playlist: List<String>? = null
+    lateinit var lesson: Lesson
 
     var done: Boolean = false
     var lastPage: Int = 0
@@ -71,6 +78,9 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
         //pdfView.fromAsset("lesson.pdf") .spacing(0).pageFitPolicy(FitPolicy.WIDTH).load()
         //playlist = JsonHelper(activity!!.assets.locales[0]).listVideo
         setPlaylist()
+        val navigationFragment =
+            fragmentManager!!.findFragmentByTag("navigation") as NavigationLessonsFragment
+        lesson = navigationFragment.currentLesson!!
         articleBack.setOnClickListener {
             activity!!.onBackPressed()
         }
@@ -100,7 +110,11 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
     }
 
     private fun getPagerAdapter(){
-        viewPager.adapter = SampleFragmentPagerAdapter(playlist!!, childFragmentManager)
+        viewPager.adapter =
+            SampleFragmentPagerAdapter(
+                playlist!!,
+                childFragmentManager
+            )
         progressBar.progress = 1
     }
 
@@ -132,6 +146,28 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
             params.height = height!!
             params.addRule(RelativeLayout.BELOW, R.id.articleToolbar)
             viewPager.layoutParams = params
+        }
+    }
+
+    private fun publishStat(stat: Statistic){
+        val profileFragment = activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment
+        profileFragment.addStat(stat)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Thread().run{
+            val currentTime = Calendar.getInstance().timeInMillis
+            lesson.time = currentTime
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Thread().run {
+            val currentTime = Calendar.getInstance().timeInMillis
+            lesson.time = currentTime-lesson.time
+            publishStat(lesson)
         }
     }
 }
