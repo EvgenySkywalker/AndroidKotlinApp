@@ -1,4 +1,4 @@
-package com.application.expertnewdesign.question
+package com.application.expertnewdesign.lesson.test.question
 import android.app.Activity
 import android.content.Context
 import android.widget.ScrollView
