@@ -22,6 +22,7 @@ import java.util.*
 
 class TestFragment(val path: String) : Fragment(){
 
+    //Для статистики
     private lateinit var lesson: Lesson
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -30,8 +31,8 @@ class TestFragment(val path: String) : Fragment(){
 
     override fun onStart() {
         super.onStart()
-        val articleFragment = fragmentManager!!.findFragmentByTag("article") as ArticleFragment
-        lesson = articleFragment.lesson
+        //Для статистики
+        setLesson()
         setTest()
     }
 
@@ -60,25 +61,34 @@ class TestFragment(val path: String) : Fragment(){
         }
     }
 
+    //Для статистики
     override fun onResume() {
         super.onResume()
-        Thread().run{
-            val currentTime = Calendar.getInstance().timeInMillis
-            lesson.time = currentTime
-        }
+
+        val currentTime = Calendar.getInstance().timeInMillis
+        lesson.time = currentTime
     }
 
+    //Для статистики
     override fun onStop() {
         super.onStop()
+
+        val currentTime = Calendar.getInstance().timeInMillis
+        lesson.time = currentTime-lesson.time
         Thread().run {
-            val currentTime = Calendar.getInstance().timeInMillis
-            lesson.time = currentTime-lesson.time
             publishStat(lesson)
         }
     }
 
+    //Для статистики
     private fun publishStat(stat: Statistic){
         val profileFragment = activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment
         profileFragment.addStat(stat)
+    }
+
+    //Для статистики
+    private fun setLesson(){
+        val articleFragment = fragmentManager!!.findFragmentByTag("article") as ArticleFragment
+        lesson = Lesson(articleFragment.lesson.name, null)
     }
 }

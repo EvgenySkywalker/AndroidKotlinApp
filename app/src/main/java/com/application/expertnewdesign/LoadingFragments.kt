@@ -94,14 +94,15 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
     override fun onResponse(call: Call<MetadataNavigation>, response: Response<MetadataNavigation>) {
         if(response.isSuccessful) {
+            val metadata = response.body()
             fragmentManager!!.beginTransaction().run {
-                add(R.id.fragment_container, NavigationLessonsFragment(response.body()), "navigation")
+                add(R.id.fragment_container, NavigationLessonsFragment(metadata), "navigation")
                 remove(fragmentManager!!.findFragmentByTag("metadata_loading")!!)
                 commit()
             }
             Thread().run{
                 val json = JsonHelper(activity!!.getExternalFilesDir(null).toString())
-                json.toJson(response.body())
+                json.toJson(metadata)
             }
         } else {
             infinite_loading.visibility = GONE
@@ -110,9 +111,9 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
     }
 
     override fun onFailure(call: Call<MetadataNavigation>, t: Throwable) {
-        val file = File(activity!!.getExternalFilesDir(null).toString()+"/metadata.json")
+        val file = File("${activity!!.getExternalFilesDir(null).toString()}/metadata.json")
         if(file.exists()) {
-            val json = JsonHelper(activity!!.getExternalFilesDir(null).toString()+"/metadata.json")
+            val json = JsonHelper("${activity!!.getExternalFilesDir(null).toString()}/metadata.json")
             fragmentManager!!.beginTransaction().run {
                 add(R.id.fragment_container, NavigationLessonsFragment(json.metadata), "navigation")
                 remove(fragmentManager!!.findFragmentByTag("metadata_loading")!!)
@@ -198,7 +199,7 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
                 val download = _intent.getParcelableExtra<Download>("download")
                 if(horizontalProgress != null)
                     horizontalProgress.progress = download!!.progress
-                if (download.progress == 100) {
+                if (download!!.progress == 100) {
                     val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
                     bManager.unregisterReceiver(this)
                     if(loading_stat != null) {
@@ -206,7 +207,7 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
                         loading_stat.text = "Распаковка..."
                     }
                     Thread().run {
-                        val path = context.getExternalFilesDir(null).toString()+lessonPath
+                        val path = "${context.getExternalFilesDir(null).toString()}$lessonPath"
                         val dir = File(path)
 
                         val zipFile = File(path, "lesson.zip")
@@ -301,10 +302,10 @@ class DownloadService : IntentService("Download Service") {
         val fileSize: Long = body.contentLength()
         val bis = BufferedInputStream(body.byteStream(), 1024 * 8)
 
-        val dir = File(getExternalFilesDir(null).toString()+lessonPath)
+        val dir = File("${getExternalFilesDir(null).toString()}$lessonPath")
         dir.mkdirs()
 
-        val outputFile = File(getExternalFilesDir(null).toString()+lessonPath, "lesson.zip")
+        val outputFile = File("${getExternalFilesDir(null).toString()}${lessonPath}/lesson.zip")
         val output = FileOutputStream(outputFile)
         var total: Long = 0
         val startTime: Long = System.currentTimeMillis()
@@ -346,7 +347,7 @@ class DownloadService : IntentService("Download Service") {
 
         sendIntent(download)
         notificationBuilder.setProgress(100,download.progress,false)
-        notificationBuilder.setContentText("Загрузка урока "+ download.currentFileSize +"/"+totalFileSize +" КБ")
+        notificationBuilder.setContentText("Загрузка урока ${download.currentFileSize}/$totalFileSize КБ")
         notificationManager.notify(0, notificationBuilder.build())
     }
 

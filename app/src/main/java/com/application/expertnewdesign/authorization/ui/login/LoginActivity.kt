@@ -14,7 +14,10 @@ import android.widget.Toast
 import com.application.expertnewdesign.R
 import kotlinx.android.synthetic.main.activity_login.*
 import android.content.Context
+import android.content.Intent
 import android.view.inputmethod.InputMethodManager
+import com.application.expertnewdesign.MainActivity
+import java.io.File
 
 
 class LoginActivity : AppCompatActivity() {
@@ -23,6 +26,8 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        loginWithExistingToken()
 
         setContentView(R.layout.activity_login)
 
@@ -91,6 +96,20 @@ class LoginActivity : AppCompatActivity() {
 
     private fun showLoginFailed(@StringRes errorString: Int) {
         Toast.makeText(applicationContext, errorString, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun loginWithExistingToken(){
+        val file = File("${filesDir.path}/token.txt")
+        if(file.exists()){
+            file.bufferedReader().use{
+                val token = it.readLine()
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    putExtra("token", token)
+                }
+                startActivity(intent)
+                finish()
+            }
+        }
     }
 }
 

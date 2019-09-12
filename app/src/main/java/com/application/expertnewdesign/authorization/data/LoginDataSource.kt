@@ -39,8 +39,15 @@ class LoginDataSource(
             call.enqueue(object: Callback<ResponseBody> {
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     if(response.isSuccessful){
+                        val token = response.body().string()
+                        Thread().run{
+                            val file = File("${act.filesDir.path}/token.txt")
+                            file.bufferedWriter().use{
+                                it.write(token)
+                            }
+                        }
                         val intent = Intent(act, MainActivity::class.java).apply {
-                            putExtra("token", response.body().string())
+                            putExtra("token", token)
                         }
                         act.startActivity(intent)
                         act.finish()

@@ -74,13 +74,8 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
         val dir = StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("article.pdf").toString()
         pdfView.fromFile(File(dir)).spacing(0).pageFitPolicy(FitPolicy.WIDTH).load()
         playlist = JsonHelper(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("videos.json").toString()).listVideo
-        //Без сервера
-        //pdfView.fromAsset("lesson.pdf") .spacing(0).pageFitPolicy(FitPolicy.WIDTH).load()
-        //playlist = JsonHelper(activity!!.assets.locales[0]).listVideo
         setPlaylist()
-        val navigationFragment =
-            fragmentManager!!.findFragmentByTag("navigation") as NavigationLessonsFragment
-        lesson = navigationFragment.currentLesson!!
+        setLesson()
         articleBack.setOnClickListener {
             activity!!.onBackPressed()
         }
@@ -156,18 +151,25 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
 
     override fun onResume() {
         super.onResume()
-        Thread().run{
-            val currentTime = Calendar.getInstance().timeInMillis
-            lesson.time = currentTime
-        }
+
+        val currentTime = Calendar.getInstance().timeInMillis
+        lesson.time = currentTime
     }
 
     override fun onStop() {
         super.onStop()
+
+        val currentTime = Calendar.getInstance().timeInMillis
+        lesson.time = currentTime-lesson.time
         Thread().run {
-            val currentTime = Calendar.getInstance().timeInMillis
-            lesson.time = currentTime-lesson.time
             publishStat(lesson)
         }
+    }
+
+    //Для статистики
+    private fun setLesson(){
+        val navigationFragment =
+            fragmentManager!!.findFragmentByTag("navigation") as NavigationLessonsFragment
+        lesson = Lesson(navigationFragment.currentLesson!!.name, null)
     }
 }

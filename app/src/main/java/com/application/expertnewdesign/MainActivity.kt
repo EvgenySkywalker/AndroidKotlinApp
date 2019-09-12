@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@OnNavigationItemSelectedListener false
             }*/
-            R.id.navigation_chat -> {
+            /*R.id.navigation_chat -> {
                 if(chatFragment != null) {
                     supportFragmentManager.beginTransaction().run {
                         hide(navigationLessonsFragment!!)
@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
                     return@OnNavigationItemSelectedListener true
                 }
                 return@OnNavigationItemSelectedListener false
-            }
+            }*/
             R.id.navigation_profile -> {
                 if(profileFragment != null && navigationLessonsFragment != null) {
                     supportFragmentManager.beginTransaction().run {
@@ -144,9 +144,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        Thread().run{
-            val json = JsonHelper(getExternalFilesDir(null).toString())
-            json.toJson(profileFragment!!.user)
-        }
+
+        val json = JsonHelper(filesDir.path)
+        json.toJson(profileFragment!!.user)
     }
 }

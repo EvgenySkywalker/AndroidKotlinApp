@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.MainActivity
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.UserDataSending
@@ -14,6 +15,7 @@ import com.application.expertnewdesign.navigation.Lesson
 import com.application.expertnewdesign.navigation.Statistic
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.profile_fragment.*
+import java.io.File
 
 class ProfileFragment : Fragment(){
 
@@ -29,6 +31,12 @@ class ProfileFragment : Fragment(){
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.profile_fragment, container, false)
     }
+
+    //////
+    //
+    ////
+    //
+    //
 
     override fun onStart() {
         super.onStart()
@@ -47,6 +55,8 @@ class ProfileFragment : Fragment(){
             hide(activity.profileFragment!!)
             commit()
         }
+
+        setUserData(true)
     }
 
     private fun getUserData(): User{
@@ -77,11 +87,31 @@ class ProfileFragment : Fragment(){
                 lessonStat.add(TimeObject(stat.name, stat.time))
             }
         }
+        setUserData(false)
     }
 
-    /*fun addStat(stat: Statistic){
-        if(stat is Lesson) {
-            user.addLessonStat(stat)
+    private fun setUserData(fromFile: Boolean){
+        fun getStr(lessonsStat: List<TimeObject>): String{
+            var lessonTime: Long = 0
+            lessonsStat.forEach {
+                lessonTime += it.time
+            }
+            lessonTime /= 1000
+            val min = lessonTime / 60
+            val sec = lessonTime % 60
+            return "$min:$sec"
         }
-    }*/
+
+        if(fromFile) {
+            val file = File("${activity!!.filesDir.path}/user.json")
+            if (file.exists()) {
+                val json = JsonHelper("${activity!!.filesDir.path}/user.json")
+                val user = json.user
+                time.text = getStr(user.lessonsStat)
+            }
+            lessonStat.addAll(user.lessonsStat)
+        }else{
+            time.text = getStr(lessonStat)
+        }
+    }
 }
