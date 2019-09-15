@@ -9,11 +9,9 @@ import androidx.fragment.app.Fragment
 import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.MainActivity
 import com.application.expertnewdesign.R
-import com.application.expertnewdesign.UserDataSending
 import com.application.expertnewdesign.authorization.ui.login.LoginActivity
 import com.application.expertnewdesign.navigation.Lesson
 import com.application.expertnewdesign.navigation.Statistic
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.profile_fragment.*
 import java.io.File
 
@@ -32,31 +30,21 @@ class ProfileFragment : Fragment(){
         return inflater.inflate(R.layout.profile_fragment, container, false)
     }
 
-    //////
-    //
-    ////
-    //
-    //
-
     override fun onStart() {
         super.onStart()
 
         token = activity!!.intent.getStringExtra("token")!!
 
-        button.setOnClickListener {
-            val intent = Intent(activity, LoginActivity::class.java)
-            activity!!.startActivity(intent)
-            activity!!.finish()
-        }
-
         val activity = activity as MainActivity
         activity.profileFragment = this
-        fragmentManager!!.beginTransaction().run{
-            hide(activity.profileFragment!!)
-            commit()
-        }
 
         setUserData(true)
+
+        button.setOnClickListener {
+            val intent = Intent(activity, LoginActivity::class.java)
+            activity.startActivity(intent)
+            activity.finish()
+        }
     }
 
     private fun getUserData(): User{
@@ -106,10 +94,10 @@ class ProfileFragment : Fragment(){
             val file = File("${activity!!.filesDir.path}/user.json")
             if (file.exists()) {
                 val json = JsonHelper("${activity!!.filesDir.path}/user.json")
-                val user = json.user
-                time.text = getStr(user.lessonsStat)
+                val old = json.user
+                time.text = getStr(old.lessonsStat)
+                lessonStat.addAll(old.lessonsStat)
             }
-            lessonStat.addAll(user.lessonsStat)
         }else{
             time.text = getStr(lessonStat)
         }

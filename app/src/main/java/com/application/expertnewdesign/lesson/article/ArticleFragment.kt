@@ -50,7 +50,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
                 }
                 R.id.hideVideo->{
                     val viewPagerAdapter = viewPager.adapter as SampleFragmentPagerAdapter
-                    viewPagerAdapter.removeFragments()
+                    //viewPagerAdapter.removeFragments()
                     viewPager.visibility = GONE
                     it.isVisible = false
                     articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
@@ -156,8 +156,8 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
         lesson.time = currentTime
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onPause() {
+        super.onPause()
 
         val currentTime = Calendar.getInstance().timeInMillis
         lesson.time = currentTime-lesson.time

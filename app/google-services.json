@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "81311381965",
+    "firebase_url": "https://expertnew-d7e21.firebaseio.com",
+    "project_id": "expertnew-d7e21",
+    "storage_bucket": "expertnew-d7e21.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:81311381965:android:3810b1e2e617cd73fd2c84",
+        "android_client_info": {
+          "package_name": "com.application.expertnewdesign"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "81311381965-n83vonjsgnp0auein08beidf65sj7hfh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.application.expertnewdesign",
+            "certificate_hash": "8aeff75a76f13690f945ce458c66cad13dfeba18"
+          }
+        },
+        {
+          "client_id": "81311381965-i3o6g7ebn4i9bp7ni2t1gh0pomcre2n3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqiwCIcENrH23PAjXxPvCtqoR4Ezdkz48"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "81311381965-i3o6g7ebn4i9bp7ni2t1gh0pomcre2n3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

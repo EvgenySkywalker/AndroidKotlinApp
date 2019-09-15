@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.viewpager.widget.ViewPager
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.lesson.article.ArticleFragment
 import com.application.expertnewdesign.lesson.test.question.*
@@ -31,11 +32,39 @@ class TestFragment(val path: String) : Fragment(){
 
     override fun onStart() {
         super.onStart()
+
         //Для статистики
         setLesson()
+
+        //Тут распарсить вопросики
         setTest()
+
+        //Сюды класть вопросики
+        val list: List<Question> = arrayListOf()
+
+        viewPager.adapter = TestFragmentPagerAdapter(childFragmentManager, list, dots_layout, context!!)
+        tabs.setupWithViewPager(viewPager)
+        viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+            override fun onPageSelected(position: Int) {
+                val testAdapter = viewPager.adapter as TestFragmentPagerAdapter
+                testAdapter.dotsList[position].setImageResource(R.drawable.ic_dot_selected)
+            }
+
+            override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+
+            }
+
+            override fun onPageScrollStateChanged(state: Int) {
+
+            }
+        })
+
+        testBack.setOnClickListener {
+            activity!!.onBackPressed()
+        }
     }
 
+    //С этим делай че хошь. Будет кайф, если будет выплевывать вопросики
     private fun setTest() {
         val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
 
@@ -55,10 +84,7 @@ class TestFragment(val path: String) : Fragment(){
 
         val questionPack = QuestionPack(activity!!, questions.toList())
 
-        scrollView.addView(questionPack)
-        testBack.setOnClickListener {
-            activity!!.onBackPressed()
-        }
+        //scrollView.addView(questionPack)
     }
 
     //Для статистики
@@ -70,8 +96,8 @@ class TestFragment(val path: String) : Fragment(){
     }
 
     //Для статистики
-    override fun onStop() {
-        super.onStop()
+    override fun onPause() {
+        super.onPause()
 
         val currentTime = Calendar.getInstance().timeInMillis
         lesson.time = currentTime-lesson.time

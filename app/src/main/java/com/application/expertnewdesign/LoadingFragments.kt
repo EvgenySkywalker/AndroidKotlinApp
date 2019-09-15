@@ -53,28 +53,7 @@ interface MetadataAPI {
     fun loadMetadata(@Header("Authorization") token: String): Call<MetadataNavigation>
 }
 
-val BASE_URL: String = "http://35.207.89.62:8080/"
-
-class UserDataSending(val user: User): Fragment(){
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.loading_fragment, container, false)
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        horizontalProgress.visibility =GONE
-        infinite_loading.visibility = VISIBLE
-
-        loading_stat.text = "Синхронизация..."
-        sendUserData()
-    }
-
-    private fun sendUserData(){
-
-    }
-}
+val BASE_URL: String = "http://35.228.251.136:8080/"
 
 class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 

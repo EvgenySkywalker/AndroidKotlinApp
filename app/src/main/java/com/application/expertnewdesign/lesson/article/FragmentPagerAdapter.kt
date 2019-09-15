@@ -12,6 +12,7 @@ class SampleFragmentPagerAdapter(private val listVideo: List<String>, private va
         return listVideo.size
     }
 
+    //FFF
     override fun getItem(position: Int): Fragment {
         return VideoFragment(listVideo[position])
     }
@@ -20,11 +21,11 @@ class SampleFragmentPagerAdapter(private val listVideo: List<String>, private va
         return listVideo[position]
     }
 
-    fun removeFragments(){
+    /*fun removeFragments(){
         if(fragmentsList != null){
             fragmentsList!!.forEach {
                 fm.beginTransaction().remove(it).commit()
             }
         }
-    }
+    }*/
 }
