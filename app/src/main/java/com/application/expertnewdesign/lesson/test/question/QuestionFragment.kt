@@ -19,4 +19,8 @@ class QuestionFragment (val question: Question): Fragment(){
         //question_fragment.xml файл разметки
         //Тут можешь делать че хошь, чтобы вывести вопросик
     }
+
+    fun getState(): Int{ //0-neutral 1-true 2-false
+        return 0
+    }
 }
