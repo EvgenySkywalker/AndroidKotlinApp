@@ -15,7 +15,7 @@
             android:usesCleartextTraffic="true">
         <activity
                 android:name=".authorization.ui.login.LoginActivity"
-                android:label="title_activity_login">
+                android:label="Эксперт ЕГЭ">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -32,6 +32,10 @@
         </activity>
 
         <service android:name=".DownloadService"/>
+        <service
+                android:enabled="true"
+                android:name=".NotificationService">
+        </service>
     </application>
 
 </manifest>

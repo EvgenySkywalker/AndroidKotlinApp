@@ -17,6 +17,7 @@ import android.content.Context
 import android.content.Intent
 import android.view.inputmethod.InputMethodManager
 import com.application.expertnewdesign.MainActivity
+import com.application.expertnewdesign.NotificationService
 import java.io.File
 
 
@@ -27,7 +28,14 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        loginWithExistingToken()
+        val notificationIntent = Intent(this, NotificationService::class.java)
+        //startService(notificationIntent)
+        //stopService(notificationIntent)
+
+        val relogin = intent.getBooleanExtra("relogin", false)
+        if(!relogin) {
+            loginWithExistingToken()
+        }
 
         setContentView(R.layout.activity_login)
 

@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.application.expertnewdesign.R
+import kotlinx.android.synthetic.main.question_fragment.*
 
 class QuestionFragment (val question: Question): Fragment(){
 
@@ -15,12 +16,11 @@ class QuestionFragment (val question: Question): Fragment(){
 
     override fun onStart() {
         super.onStart()
-
-        //question_fragment.xml файл разметки
-        //Тут можешь делать че хошь, чтобы вывести вопросик
+        root.addView(question)
     }
 
-    fun getState(): Int{ //0-neutral 1-true 2-false
-        return 0
+    override fun onStop() {
+        super.onStop()
+        root.removeView(question)
     }
 }

@@ -5,18 +5,22 @@ import android.os.Bundle
 import android.view.*
 import android.view.View.*
 import android.widget.RelativeLayout
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.viewpager.widget.ViewPager
 import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.lesson.test.TestFragment
+import com.application.expertnewdesign.lesson.test.question.QuestionMetadata
 import com.application.expertnewdesign.navigation.Lesson
 import com.application.expertnewdesign.navigation.NavigationLessonsFragment
 import com.application.expertnewdesign.navigation.Statistic
 import com.application.expertnewdesign.profile.ProfileFragment
 import com.github.barteksc.pdfviewer.util.FitPolicy
 import kotlinx.android.synthetic.main.article_fragment.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.list
 import java.io.File
 import java.lang.StringBuilder
 import java.util.*
@@ -35,21 +39,24 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
         return inflater.inflate(R.layout.article_fragment, container, false)
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+
         articleToolbar.inflateMenu(R.menu.article)
         articleToolbar.setOnMenuItemClickListener {
             when(it!!.itemId){
                 R.id.toTest->{
-                    val articleFragment = activity!!.supportFragmentManager.findFragmentByTag("article")
-                    activity!!.supportFragmentManager.beginTransaction().run{
+                    val articleFragment =
+                        activity!!.supportFragmentManager.findFragmentByTag("article")
+                    activity!!.supportFragmentManager.beginTransaction().run {
                         add(R.id.fragment_container, TestFragment(path), "test")
                         hide(articleFragment!!).addToBackStack("lesson_stack")
                         commit()
                     }
                 }
                 R.id.hideVideo->{
-                    val viewPagerAdapter = viewPager.adapter as SampleFragmentPagerAdapter
+                    //val viewPagerAdapter = viewPager.adapter as VideoFragmentPagerAdapter
                     //viewPagerAdapter.removeFragments()
                     viewPager.visibility = GONE
                     it.isVisible = false
@@ -74,7 +81,27 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
         val dir = StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("article.pdf").toString()
         pdfView.fromFile(File(dir)).spacing(0).pageFitPolicy(FitPolicy.WIDTH).load()
         playlist = JsonHelper(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("videos.json").toString()).listVideo
-        setPlaylist()
+        if(playlist != null) {
+            if (playlist!!.isNotEmpty()) {
+                setPlaylist()
+            } else {
+                articleToolbar.menu.findItem(R.id.hideVideo).isVisible = false
+            }
+        }else{
+            articleToolbar.menu.findItem(R.id.hideVideo).isVisible = false
+        }
+        val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
+        if(file.exists()) {
+            val meta = Json(JsonConfiguration.Stable).parse(
+                QuestionMetadata.serializer().list,
+                file.readText()
+            )
+            if (meta.isEmpty()) {
+                articleToolbar.menu.findItem(R.id.toTest).isVisible = false
+            }
+        }else{
+            articleToolbar.menu.findItem(R.id.toTest).isVisible = false
+        }
         setLesson()
         articleBack.setOnClickListener {
             activity!!.onBackPressed()
@@ -105,11 +132,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
     }
 
     private fun getPagerAdapter(){
-        viewPager.adapter =
-            SampleFragmentPagerAdapter(
-                playlist!!,
-                childFragmentManager
-            )
+        viewPager.adapter = VideoFragmentPagerAdapter(playlist!!, childFragmentManager)
         progressBar.progress = 1
     }
 
@@ -159,10 +182,32 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
     override fun onPause() {
         super.onPause()
 
-        val currentTime = Calendar.getInstance().timeInMillis
-        lesson.time = currentTime-lesson.time
-        Thread().run {
-            publishStat(lesson)
+        if(lesson.time.compareTo(0) != 0) {
+            val currentTime = Calendar.getInstance().timeInMillis
+            val timeInLesson = Lesson(lesson.name)
+
+            timeInLesson.time = currentTime - lesson.time
+            lesson.time = 0
+            Thread().run {
+                publishStat(timeInLesson)
+            }
+        }
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+
+        if(!isHidden){
+            val currentTime = Calendar.getInstance().timeInMillis
+            lesson.time = currentTime
+        }else{
+            val currentTime = Calendar.getInstance().timeInMillis
+            val timeInLesson = Lesson(lesson.name)
+            timeInLesson.time = currentTime-lesson.time
+            lesson.time = 0
+            Thread().run {
+                publishStat(timeInLesson)
+            }
         }
     }
 

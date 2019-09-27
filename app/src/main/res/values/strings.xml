@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Эксперт</string>
+    <string name="app_name">Эксперт ЕГЭ</string>
     <string name="login_failed">Неверные данные</string>
     <string name="connection_failed">Сервер не отвечает</string>
     <string name="invalid_username">Неверно введено имя пользователя</string>

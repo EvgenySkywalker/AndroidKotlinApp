@@ -1,19 +1,186 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
-    <Button
-            android:text="Logout"
+    <TableLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/button"/>
+            android:orientation="vertical"
+            android:layout_alignParentTop="true"
+            android:layout_above="@id/button"
+            android:paddingTop="20dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
 
-    <TextView android:id="@+id/time"
-            android:layout_width="wrap_content"
+        <TableRow>
+
+            <ProgressBar
+                    android:id="@+id/infinite_loading"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.AppCompat.ProgressBar"
+                    android:layout_gravity="center"/>
+
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                    android:id="@+id/loading_stat"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Получение информации..."
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"
+                    android:layout_gravity="center"/>
+
+        </TableRow>
+
+        <TableRow
+                android:id="@+id/profileUser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="start"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="10dp"
+                android:visibility="gone">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Логин: "
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"/>
+
+            <TextView android:id="@+id/nameView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UNDEFINED"
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"/>
+
+        </TableRow>
+
+        <TableRow
+                android:id="@+id/profileFirstName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="start"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="10dp"
+                android:visibility="gone">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"
+                    android:text="Имя: "
+                    android:textColor="#E0E0E0"/>
+
+            <TextView android:id="@+id/firstNameView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UNDEFINED"
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"/>
+
+        </TableRow>
+
+        <TableRow
+                android:id="@+id/profileLastName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="start"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="10dp"
+                android:visibility="gone">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Фамилия: "
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"/>
+
+            <TextView android:id="@+id/lastNameView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UNDEFINED"
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"/>
+
+        </TableRow>
+
+        <TableRow
+                android:id="@+id/profileRights"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="start"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="10dp"
+                android:visibility="gone">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Доступ: "
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"/>
+
+            <TextView android:id="@+id/rightsView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UNDEFINED"
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"/>
+
+        </TableRow>
+
+        <TableRow
+                android:id="@+id/profileLessons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="start"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="10dp"
+                android:visibility="gone">
+
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Время в уроках: "
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"/>
+
+            <TextView android:id="@+id/time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="UNDEFINED"
+                    android:textSize="20sp"
+                    android:textColor="#E0E0E0"/>
+
+        </TableRow>
+
+    </TableLayout>
+
+    <Button
+            android:text="Выход"
+            android:textColor="#E0E0E0"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="UNDEFINED"
-            android:layout_gravity="center"/>
+            android:layout_alignParentBottom="true"
+            android:id="@+id/button"
+            android:background="#737373"/>
 
-</LinearLayout>
+</RelativeLayout>

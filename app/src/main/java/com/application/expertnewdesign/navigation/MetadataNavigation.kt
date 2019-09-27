@@ -30,7 +30,7 @@ class Lesson(
     @SerializedName("name")
     val name: String,
     @SerializedName("description")
-    val description: String?
+    val description: String? = ""
 ): Statistic()
 
 open class Statistic{

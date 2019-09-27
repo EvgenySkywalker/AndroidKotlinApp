@@ -3,6 +3,7 @@ package com.application.expertnewdesign.lesson.test.question
 import android.content.ClipData
 import android.content.ClipDescription
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.ShapeDrawable
@@ -49,9 +50,9 @@ open class MyLayout(context : Context) : LinearLayout(context){
 }
 
 //Класс определяющий вопрос, его состояния и цвета
-abstract class Question(context: Context, val questionBase: QuestionBase) : MyLayout(context){
-    enum class State{
-        UNANSWERED, CORRECT, WRONG;
+abstract class Question(context: Context, val questionBase: QuestionBase, image : File? = null) : MyLayout(context){
+    enum class State(val value : Int){
+        UNANSWERED(0), CORRECT(1), WRONG(2);
 
         fun getColor(): Int{
             return when(this){
@@ -91,6 +92,13 @@ abstract class Question(context: Context, val questionBase: QuestionBase) : MyLa
         questionTextView.setTextColor(Color.BLACK)
 
         this.addView(questionTextView)
+
+        if (image != null){
+            val imageView = ImageView(context)
+            imageView.setImageBitmap(BitmapFactory.decodeFile(image.absolutePath))
+            addView(imageView)
+        }
+
         this.addView(answerPanel)
 
         val newLayoutParams =  LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -107,6 +115,10 @@ abstract class Question(context: Context, val questionBase: QuestionBase) : MyLa
     fun check(){
         checkAnswer()
         recolorBorder()
+    }
+
+    fun getState() : Int {
+        return state.value
     }
 
     abstract fun checkAnswer()
@@ -133,7 +145,7 @@ class QuestionPack(context: Context, private var questions : List<Question>) : L
 
     constructor(context: Context) : this(context, emptyList())
 
-    fun toXML(file : File, spacing: Int){
+    /*fun toXML(file : File, spacing: Int){
         //Формируем отступ
         var tabs = ""
         for(i in (0 until spacing))
@@ -146,11 +158,11 @@ class QuestionPack(context: Context, private var questions : List<Question>) : L
         }
 
         file.appendText("$tabs</QuestionPack>\n")
-    }
+    }*/
 }
 
-class SingleAnswerQuestion(context: Context, questionBase : SingleAnswerQuestionBase)
-    : Question(context, questionBase){
+class SingleAnswerQuestion(context: Context, questionBase : SingleAnswerQuestionBase, image : File?)
+    : Question(context, questionBase, image){
 
     private var options : Array<RadioButton> = Array(questionBase.incorrectAnswers.size + 1) { RadioButton(context) }
 
@@ -168,7 +180,7 @@ class SingleAnswerQuestion(context: Context, questionBase : SingleAnswerQuestion
         answerPanel.addView(radioGroup)
     }
 
-    constructor(context: Context) : this(context, SingleAnswerQuestionBase())
+    constructor(context: Context) : this(context, SingleAnswerQuestionBase(), null)
 
     override fun checkAnswer(){
         questionBase as SingleAnswerQuestionBase
@@ -193,8 +205,8 @@ class SingleAnswerQuestion(context: Context, questionBase : SingleAnswerQuestion
     }
 }
 
-class MultipleAnswerQuestion(context: Context, questionBase : MultipleAnswerQuestionBase)
-    : Question(context, questionBase){
+class MultipleAnswerQuestion(context: Context, questionBase : MultipleAnswerQuestionBase, image : File?)
+    : Question(context, questionBase, image){
 
     private val answerList : List<CheckBox> = List(questionBase.correctAnswers.size + questionBase.incorrectAnswers.size) { CheckBox(context) }
 
@@ -209,7 +221,7 @@ class MultipleAnswerQuestion(context: Context, questionBase : MultipleAnswerQues
         }
     }
 
-    constructor(context: Context) : this(context, MultipleAnswerQuestionBase())
+    constructor(context: Context) : this(context, MultipleAnswerQuestionBase(), null)
 
     override fun checkAnswer() {
         questionBase as MultipleAnswerQuestionBase
@@ -233,6 +245,77 @@ class MultipleAnswerQuestion(context: Context, questionBase : MultipleAnswerQues
             }
         }
     }
+}
+
+class OneWordQuestion(context: Context, questionBase : OneWordQuestionBase, image : File?)
+    : Question(context, questionBase, image){
+
+    val answer = EditText(context)
+    val correctAnswer = questionBase.correctAnswer
+
+    init {
+        addView(answer)
+    }
+
+
+    override fun checkAnswer() {
+        state = if(answer.text.toString().toLowerCase() == correctAnswer)
+            State.CORRECT
+        else
+            State.WRONG
+    }
+
+}
+
+class ChronologicalQuestion(context: Context, questionBase : ChronologicalQuestionBase, image : File?)
+    : Question(context, questionBase, image){
+
+    val correctSequence = emptyList<Int>().toMutableList()
+    val spinners = emptyList<Spinner>().toMutableList()
+
+    init{
+        val shuffled = questionBase.correctOrder.toMutableList()
+        shuffled.shuffle()
+        shuffled.forEach{
+            correctSequence.add(questionBase.correctOrder.indexOf(it)+1)
+            spinners.add(Spinner(context))
+        }
+
+        val numbers = emptyList<Int>().toMutableList()
+        for(i in questionBase.correctOrder.indices)
+            numbers.add(i + 1)
+
+        val table = TableLayout(context)
+        table.isStretchAllColumns = true
+        shuffled.forEachIndexed { index, i ->
+            val row = TableRow(context)
+
+            val left = TextView(context)
+            left.text = i
+            left.textSize = DEFAULT_TEXT_SIZE
+            left.gravity = Gravity.CENTER
+            setDefaultBorder(left)
+            row.addView(left)
+
+            spinners[index] = Spinner(context)
+            spinners[index].adapter = ArrayAdapter<Int>(context, android.R.layout.simple_spinner_item, numbers)
+            row.addView(spinners[index])
+
+            table.addView(row)
+        }
+        addView(table)
+    }
+
+    override fun checkAnswer() {
+        spinners.forEachIndexed{ index, spinner ->
+            if(spinner.selectedItem != correctSequence[index]){
+                state = State.WRONG
+            }
+        }
+        state = State.CORRECT
+    }
+
+
 }
 
 class DraggableQuestionOption(context: Context, value : String) : TextView(context){
@@ -322,17 +405,17 @@ class QuestionOptionReceiver(context: Context, private val answer : String) : Te
     fun isCorrect() : Boolean = answer == text
 }
 
-class DragQuestion(context: Context, questionBase : DragQuestionBase)
-    : Question(context, questionBase){
+class DragQuestion(context: Context, questionBase : MatchQuestionBase, image : File?)
+    : Question(context, questionBase, image){
 
-    private val answers= Array(questionBase.rightColumn.size) {
+    private val answers= Array(questionBase.pairs.size) {
         QuestionOptionReceiver(
             context,
-            questionBase.rightColumn[it]
+            questionBase.pairs[it].second
         )
     }
 
-    constructor(context: Context) : this(context, DragQuestionBase())
+    constructor(context: Context) : this(context, MatchQuestionBase(), null)
 
     override fun checkAnswer() {
         state = State.CORRECT
@@ -349,11 +432,11 @@ class DragQuestion(context: Context, questionBase : DragQuestionBase)
     init{
         val table = TableLayout(context)
         table.isStretchAllColumns = true
-        for(i in (0 until questionBase.leftColumn.size)){
+        for(i in (0 until questionBase.pairs.size)){
             val row = TableRow(context)
 
             val left = TextView(context)
-            left.text = questionBase.leftColumn[i]
+            left.text = questionBase.pairs[i].first
             left.textSize = DEFAULT_TEXT_SIZE
             left.gravity = Gravity.CENTER
             setDefaultBorder(left)
@@ -371,8 +454,10 @@ class DragQuestion(context: Context, questionBase : DragQuestionBase)
         answerPanel.addView(table)
 
         //Добавление перетягиваемых опций
-        val fullList = questionBase.rightColumn.toMutableList()
-        fullList.addAll(questionBase.otherOptions)
+        val fullList = questionBase.pairs.map {
+            it.second
+        }.toMutableList()
+        fullList.addAll(questionBase.incorrectAnswers)
         fullList.shuffle()
 
         for(value in fullList){

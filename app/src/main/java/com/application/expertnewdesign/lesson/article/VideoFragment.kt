@@ -26,8 +26,9 @@ class VideoFragment (val code: String): Fragment(){
         return inflater.inflate(R.layout.video_fragment, container, false)
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         lifecycle.addObserver(video)
         video.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
             override fun onReady(youTubePlayer: YouTubePlayer) {

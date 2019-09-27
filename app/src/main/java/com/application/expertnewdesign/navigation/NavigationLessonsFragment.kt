@@ -25,8 +25,9 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
         return inflater.inflate(R.layout.navigation_lessons_fragment, container, false)
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         //toolbar.inflateMenu(R.menu.navigation_lessons)
         val activity = activity!! as MainActivity
         activity.navigationLessonsFragment = this
@@ -98,9 +99,9 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
             override fun onItemClick(view: View, position: Int) {
                 currentLesson = currentTopic!!.lessonList.sortedBy { it.name }[position]
                 lessonPath = StringBuilder("/")
-                    .append(currentSubject!!.name.replace(' ', '+'))
-                    .append("/").append(currentTopic!!.name.replace(' ', '+'))
-                    .append("/").append(currentLesson!!.name.replace(' ', '+'))
+                    .append(currentSubject!!.name)
+                    .append("/").append(currentTopic!!.name)
+                    .append("/").append(currentLesson!!.name)
                     .toString()
                 openLesson()
             }

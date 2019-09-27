@@ -4,15 +4,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 
-class SampleFragmentPagerAdapter(private val listVideo: List<String>, private val fm: FragmentManager) : FragmentPagerAdapter(fm) {
-
-    private var fragmentsList: MutableList<Fragment>? = null
+class VideoFragmentPagerAdapter(private val listVideo: List<String>, fm: FragmentManager) : FragmentPagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
 
     override fun getCount(): Int {
         return listVideo.size
     }
 
-    //FFF
     override fun getItem(position: Int): Fragment {
         return VideoFragment(listVideo[position])
     }
@@ -20,12 +17,4 @@ class SampleFragmentPagerAdapter(private val listVideo: List<String>, private va
     override fun getPageTitle(position: Int): CharSequence? {
         return listVideo[position]
     }
-
-    /*fun removeFragments(){
-        if(fragmentsList != null){
-            fragmentsList!!.forEach {
-                fm.beginTransaction().remove(it).commit()
-            }
-        }
-    }*/
 }

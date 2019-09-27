@@ -27,6 +27,23 @@ class ChatFragment: Fragment(){
     private var adapter: CustomAdapter? = null
     private var messageList = arrayListOf<ChatMessage>()
     private val reference: DatabaseReference = FirebaseDatabase.getInstance().getReference("messages")
+    var username: String = "Аноним"
+
+    private val messageEvent = object : ValueEventListener {
+        override fun onDataChange(dataSnapshot: DataSnapshot) {
+            messageList.clear()
+            for (message in dataSnapshot.children) {
+                val chatMessage = message.getValue(ChatMessage::class.java)
+                messageList.add(chatMessage!!)
+            }
+            adapter!!.notifyDataSetChanged()
+            list_of_messages.scrollToPosition(messageList.size - 1)
+        }
+
+        override fun onCancelled(databaseError: DatabaseError) {
+
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,8 +54,8 @@ class ChatFragment: Fragment(){
         return inflater.inflate(R.layout.chat_fragment, container, false)
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         adapter = CustomAdapter(context!!, messageList)
         list_of_messages.layoutManager = LinearLayoutManager(context!!)
@@ -63,35 +80,19 @@ class ChatFragment: Fragment(){
             // of ChatMessage to the Firebase database
             reference
                 .push()
-                .setValue(
-                    ChatMessage(
-                        input.text.toString()
-                        /*FirebaseAuth.getInstance()
-                            .currentUser!!
-                            .displayName*/
-                    )
-                )
+                .setValue(ChatMessage(input.text.toString(), username))
 
             // Clear the input
             input.setText("")
             list_of_messages.scrollToPosition(messageList.size - 1)
         }
 
-        reference.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                messageList.clear()
-                for (message in dataSnapshot.children) {
-                    val chatMessage = message.getValue(ChatMessage::class.java)
-                    messageList.add(chatMessage!!)
-                }
-                adapter!!.notifyDataSetChanged()
-                list_of_messages.scrollToPosition(messageList.size - 1)
-            }
+        reference.addValueEventListener(messageEvent)
+    }
 
-            override fun onCancelled(databaseError: DatabaseError) {
-
-            }
-        })
+    override fun onDestroy() {
+        super.onDestroy()
+        reference.removeEventListener(messageEvent)
     }
 }
 

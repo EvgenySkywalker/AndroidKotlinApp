@@ -13,15 +13,12 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.application.expertnewdesign.lesson.article.ArticleFragment
 import com.google.gson.GsonBuilder
-import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Url
 import java.lang.StringBuilder
 import java.util.zip.ZipFile
 import android.view.View.GONE
@@ -36,24 +33,28 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.application.expertnewdesign.navigation.MetadataNavigation
 import com.application.expertnewdesign.navigation.NavigationLessonsFragment
 import com.application.expertnewdesign.profile.User
-import retrofit2.http.Header
-import retrofit2.http.Streaming
+import kotlinx.android.synthetic.main.activity_main.*
+import retrofit2.http.*
 import java.io.*
 import kotlin.math.roundToInt
 
 
 interface LessonAPI {
-    @GET
+    @GET("getLesson")
     @Streaming
-    fun loadLesson(@Header("Authorization") token: String, @Url url: String): Call<ResponseBody>
+    fun loadLesson(@Header("Authorization") token: String,
+                   @Query("course") subject: String,
+                   @Query("subject") topic: String,
+                   @Query("name") lesson: String): Call<ResponseBody>
 }
 
+//fetch('http://172.18.10.45:8080/getLesson?course=123&subject=123&name=a', {method:'GET', headers: {'Authorisation':'Token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicmlnaHRzIjoiYWRtaW4ifQ.f1Tn8KG7TlnDegM6UWYa5cTL6Iz4TaI0xNsLqMnA0Wk'}})
 interface MetadataAPI {
     @GET("metadata/")
     fun loadMetadata(@Header("Authorization") token: String): Call<MetadataNavigation>
 }
 
-val BASE_URL: String = "http://35.228.251.136:8080/"
+val BASE_URL: String = "http://35.228.251.136:8080/"//172.18.10.45
 
 class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
@@ -152,7 +153,7 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
             zipFile.entries().asSequence().forEach { entry ->
                 if(!entry.is_directory()){
                     zipFile.getInputStream(entry).use{ entryStream ->
-                        File(dest, entry.name.split("/").last()).outputStream().use { fileStream ->
+                        File(dest, entry.name.substringAfterLast("/")).outputStream().use { fileStream ->
                             entryStream.copyTo(fileStream)
                         }
                     }
@@ -221,6 +222,13 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
+        bManager.unregisterReceiver(broadcastReceiver)
+        activity!!.stopService(intent)
+    }
 }
 
 class DownloadService : IntentService("Download Service") {
@@ -259,16 +267,16 @@ class DownloadService : IntentService("Download Service") {
 
         val lessonAPI = retrofit.create(LessonAPI::class.java)
 
-        val request = lessonAPI.loadLesson("Token $token", StringBuilder("getLesson?name=").append(lessonPath).toString())
+        val (subject, topic, lesson) = lessonPath.substringAfter("/").split("/")
+        val request = lessonAPI.loadLesson("Token $token", subject, topic, lesson)
 
         try {
 
             downloadFile(request.execute().body())
 
-        } catch (e: IOException) {
+        } catch (e: IllegalStateException) {
 
-            e.printStackTrace()
-            Toast.makeText(applicationContext,e.message, Toast.LENGTH_SHORT).show()
+            Toast.makeText(applicationContext, e.message, Toast.LENGTH_SHORT).show()
 
         }
     }

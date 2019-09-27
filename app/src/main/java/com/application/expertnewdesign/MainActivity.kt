@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat.getSystemService
 import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import android.view.inputmethod.InputMethodManager
 import com.application.expertnewdesign.chat.ChatFragment
+import com.application.expertnewdesign.lesson.test.TestFragment
 import kotlinx.android.synthetic.main.activity_login.*
 import kotlinx.android.synthetic.main.activity_main.container
 
@@ -38,16 +39,29 @@ class MainActivity : AppCompatActivity() {
     private val onNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(container.windowToken, 0)
+        val metadataFragment = supportFragmentManager.findFragmentByTag("metadata_loading")
+        val lessonLoadingFragment = supportFragmentManager.findFragmentByTag("lesson_loading")
         when (item.itemId) {
             R.id.navigation_lessons -> {
-                if(navigationLessonsFragment != null) {
-                    supportFragmentManager.beginTransaction().run {
-                        show(navigationLessonsFragment!!)
-                        commit()
+                supportFragmentManager.beginTransaction().run {
+                    if(chatFragment != null){
+                        hide(chatFragment!!)
                     }
-                    return@OnNavigationItemSelectedListener true
+                    if(profileFragment != null){
+                        hide(profileFragment!!)
+                    }
+                    if(navigationLessonsFragment != null) {
+                        show(navigationLessonsFragment!!)
+                    }
+                    if(metadataFragment != null){
+                        show(metadataFragment)
+                    }
+                    if(lessonLoadingFragment != null){
+                        show(lessonLoadingFragment)
+                    }
+                    commit()
                 }
-                return@OnNavigationItemSelectedListener false
+                return@OnNavigationItemSelectedListener true
             }
             /*R.id.navigation_history -> {
                 if(historyFragment != null) {
@@ -59,24 +73,44 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@OnNavigationItemSelectedListener false
             }*/
-            R.id.navigation_chat -> {
-                if(chatFragment != null) {
+            R.id.navigation_profile -> {
+                if(profileFragment != null) {
                     supportFragmentManager.beginTransaction().run {
-                        hide(navigationLessonsFragment!!)
-                        hide(profileFragment!!)
-                        show(chatFragment!!)
+                        if(navigationLessonsFragment != null) {
+                            hide(navigationLessonsFragment!!)
+                        }
+                        if(chatFragment != null) {
+                            hide(chatFragment!!)
+                        }
+                        if(metadataFragment != null){
+                            hide(metadataFragment)
+                        }
+                        if(lessonLoadingFragment != null){
+                            hide(lessonLoadingFragment)
+                        }
+                        show(profileFragment!!)
                         commit()
                     }
                     return@OnNavigationItemSelectedListener true
                 }
                 return@OnNavigationItemSelectedListener false
             }
-            R.id.navigation_profile -> {
-                if(profileFragment != null && navigationLessonsFragment != null) {
+            R.id.navigation_chat -> {
+                if(chatFragment != null) {
                     supportFragmentManager.beginTransaction().run {
-                        hide(navigationLessonsFragment!!)
-                        hide(chatFragment!!)
-                        show(profileFragment!!)
+                        if(navigationLessonsFragment != null) {
+                            hide(navigationLessonsFragment!!)
+                        }
+                        if(profileFragment != null) {
+                            hide(profileFragment!!)
+                        }
+                        if(metadataFragment != null){
+                            hide(metadataFragment)
+                        }
+                        if(lessonLoadingFragment != null){
+                            hide(lessonLoadingFragment)
+                        }
+                        show(chatFragment!!)
                         commit()
                     }
                     return@OnNavigationItemSelectedListener true
@@ -127,9 +161,10 @@ class MainActivity : AppCompatActivity() {
     private fun init(){
         createNotificationChannel()
         supportFragmentManager.beginTransaction().run{
-            add(R.id.fragment_container, MetadataLoadingFragment(), "metadata_loading")
             add(R.id.fragment_container, ProfileFragment(), "profile")
             add(R.id.fragment_container, ChatFragment(), "chat")
+            add(R.id.fragment_container, MetadataLoadingFragment(), "metadata_loading")
+            //add(R.id.fragment_container, TestFragment(""), "test")
             commit()
         }
     }

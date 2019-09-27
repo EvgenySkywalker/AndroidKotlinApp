@@ -9,10 +9,10 @@ import java.io.*
 
 class JsonHelper(private val path: String){
 
-    private val reader: BufferedReader
-        get() = File(path).reader(Charsets.UTF_8).buffered()
+    private val reader: BufferedReader?
+        get() = getJsonReader()
 
-    val listVideo: List<String>
+    val listVideo: List<String>?
         get() = getVideoList()
 
     val metadata: MetadataNavigation
@@ -21,9 +21,20 @@ class JsonHelper(private val path: String){
     val user: User
         get() = uFromJson()
 
-    private fun getVideoList(): List<String>{
+    private fun getJsonReader(): BufferedReader?{
+        val file = File(path)
+        if(file.exists()){
+            return file.reader(Charsets.UTF_8).buffered()
+        }
+        return null
+    }
+
+    private fun getVideoList(): List<String>?{
         val collectionType = object : TypeToken<List<String>>() {}.type
-        return Gson().fromJson(reader, collectionType)
+        if(reader != null) {
+            return Gson().fromJson(reader, collectionType)
+        }
+        return null
     }
 
     fun toJson(metadata: MetadataNavigation){
