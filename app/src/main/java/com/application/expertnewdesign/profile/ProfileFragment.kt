@@ -63,8 +63,6 @@ class ProfileFragment : Fragment(){
         val activity = activity as MainActivity
         activity.profileFragment = this
 
-        setUserData(true)
-
         button.setOnClickListener {
             val intent = Intent(activity, LoginActivity::class.java)
             intent.putExtra("relogin", true)
@@ -104,14 +102,14 @@ class ProfileFragment : Fragment(){
                 lessonStat.add(TimeObject(stat.name, stat.time))
             }
         }
-        setUserData(false)
+        //setUserData()
     }
 
     fun addStat(stat: TestObject) {
         testStat.add(stat)
     }
 
-    private fun setUserData(fromFile: Boolean){
+    private fun setUserData(){
         fun getStr(lessonsStat: List<TimeObject>): String{
             var lessonTime: Long = 0
             lessonsStat.forEach {
@@ -122,20 +120,6 @@ class ProfileFragment : Fragment(){
             return "$min минут(ы)"
         }
 
-        if(fromFile) {
-            val file = File("${activity!!.filesDir.path}/user.json")
-            if (file.exists()) {
-                val json = JsonHelper("${activity!!.filesDir.path}/user.json")
-                val old = json.user
-                time.text = getStr(old.lessonsStat)
-                if(old.lessonsStat.isNotEmpty()) {
-                    lessonStat.addAll(old.lessonsStat)
-                }
-                if(old.testsStat.isNotEmpty()) {
-                    testStat.addAll(old.testsStat)
-                }
-            }
-        }else{
             nameView.text = name
             firstNameView.text = firstName
             profileFirstName.visibility = VISIBLE
@@ -145,7 +129,14 @@ class ProfileFragment : Fragment(){
             profileRights.visibility = VISIBLE
             time.text = getStr(lessonStat)
             profileLessons.visibility = VISIBLE
-        }
+    }
+
+    fun clearTests(){
+        testStat.clear()
+    }
+
+    fun clearLessons(){
+        lessonStat.clear()
     }
 
     fun loadUserInfo(){
@@ -170,7 +161,7 @@ class ProfileFragment : Fragment(){
                     firstName = user.firstName
                     lastName = user.lastName
                     rights = getRightsRU(user.rights!!)
-                    setUserData(false)
+                    setUserData()
                     val chatFragment = activity!!.supportFragmentManager.findFragmentByTag("chat") as ChatFragment
                     when(name){
                         "admin"->{

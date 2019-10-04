@@ -7,6 +7,7 @@ import android.view.View.*
 import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentPagerAdapter
 import androidx.viewpager.widget.ViewPager
 import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.R
@@ -47,6 +48,14 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
         articleToolbar.setOnMenuItemClickListener {
             when(it!!.itemId){
                 R.id.toTest->{
+                    if(viewPager.adapter != null) {
+                        val adapter = viewPager.adapter as VideoFragmentPagerAdapter
+                        if(adapter.fragmentsList.isNotEmpty()) {
+                            if(adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer != null) {
+                                adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer!!.pause()
+                            }
+                        }
+                    }
                     val articleFragment =
                         activity!!.supportFragmentManager.findFragmentByTag("article")
                     activity!!.supportFragmentManager.beginTransaction().run {
@@ -56,8 +65,14 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
                     }
                 }
                 R.id.hideVideo->{
-                    //val viewPagerAdapter = viewPager.adapter as VideoFragmentPagerAdapter
-                    //viewPagerAdapter.removeFragments()
+                    if(viewPager.adapter != null) {
+                        val adapter = viewPager.adapter as VideoFragmentPagerAdapter
+                        if (adapter.fragmentsList.isNotEmpty()) {
+                            if (adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer != null) {
+                                adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer!!.pause()
+                            }
+                        }
+                    }
                     viewPager.visibility = GONE
                     it.isVisible = false
                     articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
@@ -65,7 +80,6 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
                 }
                 R.id.showVideo->{
                     viewPager.visibility = VISIBLE
-                    getPagerAdapter()
                     it.isVisible = false
                     articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
                     if(progressBar.max > 1){
@@ -85,10 +99,10 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
             if (playlist!!.isNotEmpty()) {
                 setPlaylist()
             } else {
-                articleToolbar.menu.findItem(R.id.hideVideo).isVisible = false
+                articleToolbar.menu.findItem(R.id.showVideo).isVisible = false
             }
         }else{
-            articleToolbar.menu.findItem(R.id.hideVideo).isVisible = false
+            articleToolbar.menu.findItem(R.id.showVideo).isVisible = false
         }
         val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
         if(file.exists()) {
@@ -184,7 +198,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
 
         if(lesson.time.compareTo(0) != 0) {
             val currentTime = Calendar.getInstance().timeInMillis
-            val timeInLesson = Lesson(lesson.name)
+            val timeInLesson = Lesson(path)
 
             timeInLesson.time = currentTime - lesson.time
             lesson.time = 0
@@ -198,16 +212,9 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
         super.onHiddenChanged(hidden)
 
         if(!isHidden){
-            val currentTime = Calendar.getInstance().timeInMillis
-            lesson.time = currentTime
+            onResume()
         }else{
-            val currentTime = Calendar.getInstance().timeInMillis
-            val timeInLesson = Lesson(lesson.name)
-            timeInLesson.time = currentTime-lesson.time
-            lesson.time = 0
-            Thread().run {
-                publishStat(timeInLesson)
-            }
+            onPause()
         }
     }
 

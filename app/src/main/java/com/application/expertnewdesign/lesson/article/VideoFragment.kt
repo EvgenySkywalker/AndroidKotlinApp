@@ -20,7 +20,7 @@ class VideoFragment (val code: String): Fragment(){
         fun fullScreen(isFullScreen: Boolean)
     }
 
-    private var initializedYouTubePlayer: YouTubePlayer? = null
+    var initializedYouTubePlayer: YouTubePlayer? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.video_fragment, container, false)

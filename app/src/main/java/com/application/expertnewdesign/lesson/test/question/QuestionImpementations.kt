@@ -8,12 +8,16 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.ShapeDrawable
 import android.graphics.drawable.shapes.RectShape
+import android.graphics.drawable.shapes.Shape
 import android.os.Build
+import android.text.InputFilter
 import android.view.DragEvent
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import com.application.expertnewdesign.R
+import kotlinx.android.synthetic.main.question_fragment.view.*
 import java.io.File
 
 fun setDefaultBorder(view : View) {
@@ -49,8 +53,52 @@ open class MyLayout(context : Context) : LinearLayout(context){
     }
 }
 
+abstract class Question(context: Context, val questionBase: QuestionBase, image: File?) : LinearLayout(context){
+    val status = TextView(context)
+    val scroll = ScrollView(context)
+    val questionText = TextView(context)
+    val imageView = ImageView(context)
+    val answer = EditText(context)
+
+    var earnedPoints = 0
+
+    init {
+        orientation = VERTICAL
+
+        status.text = questionBase.maxGrade.toString()
+        addView(status)
+
+        val scrollLayout = LinearLayout(context)
+        scroll.addView(scrollLayout)
+        addView(scroll)
+
+
+        questionText.text = questionBase.questionText
+        scrollLayout.addView(questionText)
+
+        if (image != null){
+            imageView.setImageBitmap(BitmapFactory.decodeFile(image.absolutePath))
+
+            scrollLayout.addView(imageView)
+
+            imageView.layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            imageView.scaleType = ImageView.ScaleType.FIT_CENTER
+            imageView.adjustViewBounds = true
+        }
+
+        answer.hint = "Введите ответ"
+        addView(answer)
+    }
+
+    fun check(){
+
+    }
+
+    abstract fun checkAnswer()
+}
+
 //Класс определяющий вопрос, его состояния и цвета
-abstract class Question(context: Context, val questionBase: QuestionBase, image : File? = null) : MyLayout(context){
+abstract class QuestionModified(context: Context, questionBase: QuestionBase, image : File? = null) : Question(context, questionBase, image){
     enum class State(val value : Int){
         UNANSWERED(0), CORRECT(1), WRONG(2);
 
@@ -76,11 +124,21 @@ abstract class Question(context: Context, val questionBase: QuestionBase, image 
         }
     }
 
-    private var questionTextView : TextView = TextView(context)
+    protected var state : State = State.UNANSWERED
+    protected var answerPanel  = LinearLayout(context)
+    init {
+        addView(answerPanel)
+    }
+
+
+    /*private var questionTextView : TextView = TextView(context)
+    private val pointsView = TextView(context)
     protected var answerPanel  = LinearLayout(context)
 
-    protected var state : State =
-        State.UNANSWERED
+
+    private fun refreshPoints(){
+        pointsView.text = "$earnedPoints/${questionBase.maxGrade}"
+    }
 
     init {
         orientation = VERTICAL
@@ -91,37 +149,51 @@ abstract class Question(context: Context, val questionBase: QuestionBase, image 
         questionTextView.setPadding(10, 5, 10, 5)
         questionTextView.setTextColor(Color.BLACK)
 
-        this.addView(questionTextView)
+        addView(pointsView)
+        addView(questionTextView)
 
         if (image != null){
             val imageView = ImageView(context)
             imageView.setImageBitmap(BitmapFactory.decodeFile(image.absolutePath))
+            //imageView.layoutParams.width =
+
             addView(imageView)
+
+            imageView.layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            imageView.scaleType = ImageView.ScaleType.FIT_CENTER
+            imageView.adjustViewBounds = true
         }
 
-        this.addView(answerPanel)
+        addView(answerPanel)
+        answerPanel.layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
 
-        val newLayoutParams =  LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        newLayoutParams.setMargins(10, 10, 10, 10)
-        layoutParams = newLayoutParams
+        val layoutParams =  LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        layoutParams.setMargins(10, 10, 10, 10)
+        this.layoutParams = layoutParams
 
-       recolorBorder()
+        recolorBorder()
+        refreshPoints()
     }
 
     private fun recolorBorder(){
-        setBorderColor(state.getColor())
+        //setBorderColor(state.getColor())
     }
 
-    fun check(){
+    /*override fun check(){
         checkAnswer()
         recolorBorder()
-    }
+        refreshPoints()
+    }*/
 
     fun getState() : Int {
         return state.value
-    }
+    }*/
+}
 
-    abstract fun checkAnswer()
+abstract class QuestionEGE(context: Context, questionBase: QuestionBase, image : File? = null) : Question(context, questionBase, image){
+
+
+
 }
 
 class QuestionPack(context: Context, private var questions : List<Question>) : LinearLayout(context) {
@@ -162,7 +234,7 @@ class QuestionPack(context: Context, private var questions : List<Question>) : L
 }
 
 class SingleAnswerQuestion(context: Context, questionBase : SingleAnswerQuestionBase, image : File?)
-    : Question(context, questionBase, image){
+    : QuestionModified(context, questionBase, image){
 
     private var options : Array<RadioButton> = Array(questionBase.incorrectAnswers.size + 1) { RadioButton(context) }
 
@@ -206,7 +278,7 @@ class SingleAnswerQuestion(context: Context, questionBase : SingleAnswerQuestion
 }
 
 class MultipleAnswerQuestion(context: Context, questionBase : MultipleAnswerQuestionBase, image : File?)
-    : Question(context, questionBase, image){
+    : QuestionModified(context, questionBase, image){
 
     private val answerList : List<CheckBox> = List(questionBase.correctAnswers.size + questionBase.incorrectAnswers.size) { CheckBox(context) }
 
@@ -248,18 +320,18 @@ class MultipleAnswerQuestion(context: Context, questionBase : MultipleAnswerQues
 }
 
 class OneWordQuestion(context: Context, questionBase : OneWordQuestionBase, image : File?)
-    : Question(context, questionBase, image){
+    : QuestionModified(context, questionBase, image){
 
-    val answer = EditText(context)
+    val answer2 = EditText(context)
     val correctAnswer = questionBase.correctAnswer
 
     init {
-        addView(answer)
+        addView(answer2)
     }
 
 
     override fun checkAnswer() {
-        state = if(answer.text.toString().toLowerCase() == correctAnswer)
+        state = if(answer2.text.toString().toLowerCase() == correctAnswer)
             State.CORRECT
         else
             State.WRONG
@@ -268,7 +340,7 @@ class OneWordQuestion(context: Context, questionBase : OneWordQuestionBase, imag
 }
 
 class ChronologicalQuestion(context: Context, questionBase : ChronologicalQuestionBase, image : File?)
-    : Question(context, questionBase, image){
+    : QuestionModified(context, questionBase, image){
 
     val correctSequence = emptyList<Int>().toMutableList()
     val spinners = emptyList<Spinner>().toMutableList()
@@ -406,7 +478,7 @@ class QuestionOptionReceiver(context: Context, private val answer : String) : Te
 }
 
 class DragQuestion(context: Context, questionBase : MatchQuestionBase, image : File?)
-    : Question(context, questionBase, image){
+    : QuestionModified(context, questionBase, image){
 
     private val answers= Array(questionBase.pairs.size) {
         QuestionOptionReceiver(
@@ -473,4 +545,247 @@ class DragQuestion(context: Context, questionBase : MatchQuestionBase, image : F
         border.paint.style = Paint.Style.STROKE
         view.background = border
     }
+}
+
+
+abstract class EGE_Question(context: Context, questionBase : QuestionBase, image : File?)
+    : QuestionModified(context, questionBase, image)
+{
+    val answer2 = EditText(context)
+
+    init {
+        answer2.hint = "Введите ответ"
+        answerPanel.addView(answer2)
+    }
+}
+
+class OneWordQuestionEGE(context: Context, questionBase : OneWordQuestionEGE_Base, image : File?)
+    : EGE_Question(context, questionBase, image)
+{
+    val correctAnswer = questionBase.correctAnswer
+
+    override fun checkAnswer() {
+        if(answer.text.toString().toLowerCase() == correctAnswer){
+            earnedPoints = 1
+            state = State.CORRECT
+        } else {
+            earnedPoints = 0
+            state = State.WRONG
+        }
+    }
+
+}
+
+class MultipleAnswerQuestionEGE2(context: Context, questionBase : MultipleAnswerQuestionEGE_Base, image : File?)
+    :QuestionEGE(context, questionBase, image)
+{
+    override fun checkAnswer() {
+
+    }
+
+}
+
+class MultipleAnswerQuestionEGE(context: Context, questionBase : MultipleAnswerQuestionEGE_Base, image : File?)
+    : EGE_Question(context, questionBase, image)
+{
+    val correctAnswer = questionBase.correctAnswer
+
+    init {
+        //editText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(maxLengthofEditText)});
+        val filter = InputFilter.LengthFilter(correctAnswer.length)
+        answer.filters = arrayOf<InputFilter>(filter)
+    }
+
+    override fun checkAnswer() {
+        var mistakes = 0
+        val givenAnswer = answer.text.toString()
+        givenAnswer.forEach {
+            if(!correctAnswer.contains(it))
+                ++mistakes
+        }
+        mistakes += correctAnswer.length - givenAnswer.length
+
+
+        when(questionBase.maxGrade){
+            1 -> {
+                if(mistakes == 0){
+                    earnedPoints = 1
+                    state = State.CORRECT
+                } else {
+                    earnedPoints = 0
+                    state = State.WRONG
+                }
+            }
+
+            2 -> {
+                when(mistakes){
+                    0 -> {
+                        earnedPoints = 2
+                        state = State.CORRECT
+                    }
+
+                    1 -> {
+                        earnedPoints = 1
+                        state = State.WRONG
+                    }
+
+                    else -> {
+                        earnedPoints = 0
+                        state = State.WRONG
+                    }
+                }
+            }
+
+            else -> throw Exception("Неизвестная стратегия оценивания")
+        }
+    }
+
+}
+
+class SequenceQuestionEGE(context: Context, questionBase : SequenceQuestionEGE_Base, image : File?)
+    : EGE_Question(context, questionBase, image)
+{
+    val correctAnswer = questionBase.correctAnswer
+
+    init {
+        //editText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(maxLengthofEditText)});
+        val filter = InputFilter.LengthFilter(correctAnswer.length)
+        answer.filters = arrayOf<InputFilter>(filter)
+    }
+
+    override fun checkAnswer() {
+        var mistakes = 0
+        val givenAnswer = answer.text.toString()
+        givenAnswer.forEachIndexed { index, char ->
+            if(char != correctAnswer[index])
+                ++mistakes
+        }
+        mistakes += correctAnswer.length - givenAnswer.length
+
+
+        when(questionBase.maxGrade){
+            1 -> {
+                if(mistakes == 0){
+                    earnedPoints = 1
+                    state = State.CORRECT
+                } else {
+                    earnedPoints = 0
+                    state = State.WRONG
+                }
+            }
+
+            3 -> {
+                when(mistakes){
+                    0 -> {
+                        earnedPoints = 3
+                        state = State.CORRECT
+                    }
+
+                    1 -> {
+                        earnedPoints = 2
+                        state = State.WRONG
+                    }
+
+                    else -> {
+                        earnedPoints = 0
+                        state = State.WRONG
+                    }
+                }
+            }
+
+            else -> throw Exception("Неизвестная стратегия оценивания")
+        }
+
+
+
+    }
+
+}
+
+class MatchQuestionEGE(context: Context, questionBase : MatchQuestionEGE_Base, image : File?)
+    : EGE_Question(context, questionBase, image)
+{
+    val correctAnswer = questionBase.correctAnswer
+
+    init {
+        //editText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(maxLengthofEditText)});
+        val filter = InputFilter.LengthFilter(correctAnswer.length)
+        answer.filters = arrayOf<InputFilter>(filter)
+    }
+
+
+    override fun checkAnswer() {
+        var mistakes = 0
+        val givenAnswer = answer.text.toString()
+        givenAnswer.forEachIndexed { index, char ->
+            if(char != correctAnswer[index])
+                ++mistakes
+        }
+        mistakes += correctAnswer.length - givenAnswer.length
+
+        when(mistakes){
+            0 -> {
+                earnedPoints = 2
+                state = State.CORRECT
+            }
+
+            1 -> {
+                earnedPoints = 1
+                state = State.WRONG
+            }
+
+            else -> {
+                earnedPoints = 0
+                state = State.WRONG
+            }
+        }
+
+    }
+
+}
+
+class PairMatchQuestionEGE(context: Context, questionBase : PairMatchQuestionEGE_Base, image : File?)
+    : EGE_Question(context, questionBase, image)
+{
+    val correctAnswer = questionBase.correctAnswer
+
+    init {
+        //editText.setFilters(new InputFilter[] {new InputFilter.LengthFilter(maxLengthofEditText)});
+        val filter = InputFilter.LengthFilter(correctAnswer.length)
+        answer.filters = arrayOf<InputFilter>(filter)
+    }
+
+    override fun checkAnswer() {
+        fun checkPair(pair : String, correctPair : String) : Boolean{
+            pair.forEach {
+                if(!correctPair.contains(it))
+                    return false
+            }
+            return true
+        }
+
+
+        var paddedAnswer = answer.text.toString()
+        for(i in (0..(correctAnswer.length - answer.text.toString().length)))
+            paddedAnswer += " "
+
+        var result = 0
+        if(checkPair(paddedAnswer.substring(0, 2), correctAnswer.substring(0,2)))
+            ++result
+
+        if(checkPair(paddedAnswer.substring(2, 4), correctAnswer.substring(2,4)))
+            ++result
+
+        earnedPoints = result
+
+        state =  if(earnedPoints != questionBase.maxGrade)
+            State.WRONG
+        else
+            State.CORRECT
+
+
+
+
+    }
+
 }

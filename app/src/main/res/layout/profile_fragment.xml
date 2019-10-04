@@ -11,7 +11,8 @@
             android:layout_above="@id/button"
             android:paddingTop="20dp"
             android:paddingStart="10dp"
-            android:paddingEnd="10dp">
+            android:paddingEnd="10dp"
+            android:gravity="center_horizontal">
 
         <TableRow>
 
@@ -52,13 +53,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Логин: "
+                    style="@style/TextAppearance.MaterialComponents.Subtitle2"
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"/>
+                    android:textColor="#202020"/>
 
             <TextView android:id="@+id/nameView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="UNDEFINED"
+                    style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
                     android:textColor="#E0E0E0"/>
 
@@ -80,12 +83,14 @@
                     android:layout_height="wrap_content"
                     android:textSize="20sp"
                     android:text="Имя: "
-                    android:textColor="#E0E0E0"/>
+                    style="@style/TextAppearance.MaterialComponents.Subtitle2"
+                    android:textColor="#202020"/>
 
             <TextView android:id="@+id/firstNameView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="UNDEFINED"
+                    style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
                     android:textColor="#E0E0E0"/>
 
@@ -106,13 +111,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Фамилия: "
+                    style="@style/TextAppearance.MaterialComponents.Subtitle2"
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"/>
+                    android:textColor="#202020"/>
 
             <TextView android:id="@+id/lastNameView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="UNDEFINED"
+                    style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
                     android:textColor="#E0E0E0"/>
 
@@ -133,13 +140,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Доступ: "
+                    style="@style/TextAppearance.MaterialComponents.Subtitle2"
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"/>
+                    android:textColor="#202020"/>
 
             <TextView android:id="@+id/rightsView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="UNDEFINED"
+                    style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
                     android:textColor="#E0E0E0"/>
 
@@ -159,14 +168,16 @@
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Время в уроках: "
+                    android:text="В уроках: "
+                    style="@style/TextAppearance.MaterialComponents.Subtitle2"
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"/>
+                    android:textColor="#202020"/>
 
             <TextView android:id="@+id/time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="UNDEFINED"
+                    style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
                     android:textColor="#E0E0E0"/>
 
@@ -176,7 +187,9 @@
 
     <Button
             android:text="Выход"
+            android:textSize="20sp"
             android:textColor="#E0E0E0"
+            style="@style/TextAppearance.MaterialComponents.Overline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"

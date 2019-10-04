@@ -11,7 +11,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:background="#5F5F5F"
+            android:background="@drawable/navigation_bckgrnd"
             android:elevation="2dp">
 
         <ImageView
@@ -33,6 +33,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="18sp"
                     android:textColor="#E0E0E0"
+                    style="@style/TextAppearance.MaterialComponents.Body1"
                     android:layout_alignParentTop="true"/>
 
             <TextView
@@ -40,6 +41,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="#BFBFBF"
+                    style="@style/TextAppearance.MaterialComponents.Body1"
                     android:layout_below="@id/title"/>
 
         </RelativeLayout>

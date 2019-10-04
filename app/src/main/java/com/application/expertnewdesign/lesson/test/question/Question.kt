@@ -9,7 +9,8 @@ const val DEFAULT_TEXT_SIZE = 16f
 @Serializable
 open class QuestionBase(
     val questionText: String,
-    val questionID: Int
+    val questionID: Int,
+    val maxGrade: Int
 ){
     override fun toString(): String {
         return "QuestionText: $questionText\nID: $questionID\n"
@@ -20,6 +21,7 @@ open class QuestionBase(
             init {
                 addElement("questionText")
                 addElement("questionID")
+                addElement("maxGrade")
             }
         }
 
@@ -34,18 +36,21 @@ open class QuestionBase(
             val dec: CompositeDecoder = decoder.beginStructure(descriptor)
             var questionText: String? = null
             var questionID: Int? = null
+            var maxGrade: Int? = null
             loop@ while (true) {
                 when (val i = dec.decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
                     0 -> questionText = dec.decodeStringElement(descriptor, i)
                     1 -> questionID = dec.decodeIntElement(descriptor, i)
+                    2 -> maxGrade = dec.decodeIntElement(descriptor, i)
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
             dec.endStructure(descriptor)
             return QuestionBase(
                 questionText ?: throw MissingFieldException("questionText"),
-                questionID ?: throw MissingFieldException("questionID")
+                questionID ?: throw MissingFieldException("questionID"),
+                maxGrade ?: 1
             )
         }
     }
@@ -56,9 +61,10 @@ open class QuestionBase(
 class SingleAnswerQuestionBase(
     questionText: String = "",
     questionID: Int = 0,
+    maxGrade: Int = 1,
     val correctAnswer : String = "",
     val incorrectAnswers : List<String> = emptyList())
-    : QuestionBase(questionText, questionID){
+    : QuestionBase(questionText, questionID, maxGrade){
 
     override fun toString(): String {
         return "${super.toString()}CorrectAnswer: $correctAnswer\nIncorrectAnswers: $incorrectAnswers"
@@ -99,6 +105,7 @@ class SingleAnswerQuestionBase(
             return SingleAnswerQuestionBase(
                 questionBase?.questionText ?: throw MissingFieldException("questionBase"),
                 questionBase.questionID,
+                questionBase.maxGrade,
                 correctAnswer ?: throw MissingFieldException("correctAnswer"),
                 incorrectAnswers ?: throw MissingFieldException("incorrectAnswers")
             )
@@ -111,9 +118,10 @@ class SingleAnswerQuestionBase(
 class MultipleAnswerQuestionBase(
     questionText: String = "",
     questionID: Int = 0,
+    maxGrade: Int = 1,
     var correctAnswers : List<String> = emptyList(),
     var incorrectAnswers : List<String> = emptyList())
-    : QuestionBase(questionText, questionID){
+    : QuestionBase(questionText, questionID, maxGrade){
 
     override fun toString(): String {
         return "${super.toString()}CorrectAnswers: $correctAnswers\nIncorrectAnswers: $incorrectAnswers"
@@ -156,6 +164,7 @@ class MultipleAnswerQuestionBase(
             return MultipleAnswerQuestionBase(
                 questionBase?.questionText ?: throw MissingFieldException("questionBase"),
                 questionBase.questionID,
+                questionBase.maxGrade,
                 correctAnswers ?: throw MissingFieldException("correctAnswers"),
                 incorrectAnswers ?: throw MissingFieldException("incorrectAnswers")
 
@@ -173,9 +182,10 @@ data class MatchPair(val first : String, val second : String)
 class MatchQuestionBase(
     questionText: String = "",
     questionID: Int = 0,
+    maxGrade: Int = 1,
     val pairs : List<Pair<String, String>> = emptyList(),
     val incorrectAnswers : List<String> = emptyList())
-    : QuestionBase(questionText, questionID){
+    : QuestionBase(questionText, questionID, maxGrade){
 
     override fun toString(): String {
         return "${super.toString()}Pairs: $pairs\nIncorrectAnswers: $incorrectAnswers\n"
@@ -224,6 +234,7 @@ class MatchQuestionBase(
             return MatchQuestionBase(
                 questionBase?.questionText ?: throw MissingFieldException("questionBase"),
                 questionBase.questionID,
+                questionBase.maxGrade,
                 finalPairs,
                 incorrectAnswers ?: throw MissingFieldException("incorrectAnswers")
             )
@@ -236,9 +247,10 @@ class MatchQuestionBase(
 class OneWordQuestionBase(
     questionText: String = "",
     questionID: Int = 0,
+    maxGrade: Int = 1,
     val correctAnswer : String
 )
-    : QuestionBase(questionText, questionID){
+    : QuestionBase(questionText, questionID, maxGrade){
 
     override fun toString(): String {
         return "${super.toString()}CorrectAnswer: $correctAnswer\n"
@@ -275,6 +287,7 @@ class OneWordQuestionBase(
             return OneWordQuestionBase(
                 questionBase?.questionText ?: throw MissingFieldException("questionBase"),
                 questionBase.questionID,
+                questionBase.maxGrade,
                 correctAnswer ?: throw MissingFieldException("correctAnswer")
             )
         }
@@ -285,9 +298,10 @@ class OneWordQuestionBase(
 class ChronologicalQuestionBase(
     questionText: String = "",
     questionID: Int = 0,
+    maxGrade: Int = 1,
     val correctOrder : List<String>
 )
-    :QuestionBase(questionText, questionID){
+    :QuestionBase(questionText, questionID, maxGrade){
 
     override fun toString(): String {
         return "${super.toString()}CorrectOrder: $correctOrder\n"
@@ -323,10 +337,241 @@ class ChronologicalQuestionBase(
             return ChronologicalQuestionBase(
                 questionBase?.questionText ?: throw MissingFieldException("questionBase"),
                 questionBase.questionID,
+                questionBase.maxGrade,
                 correctOrder ?: throw MissingFieldException("correctOrder")
             )
         }
     }
+}
+
+@Serializable
+class MultipleAnswerQuestionEGE_Base(
+    questionText: String = "",
+    questionID: Int = 0,
+    maxGrade: Int = 1,
+    val correctAnswer: String
+) : QuestionBase(questionText, questionID, maxGrade){
+
+    @Serializer(forClass = MultipleAnswerQuestionEGE_Base::class) companion object : KSerializer<MultipleAnswerQuestionEGE_Base> {
+        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("MultipleAnswerQuestionEGE_Base") {
+            init {
+                addElement("questionBasic")
+                addElement("correctAnswer")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: MultipleAnswerQuestionEGE_Base) {
+            val compositeOutput = encoder.beginStructure(descriptor)
+            //placeholder
+            compositeOutput.endStructure(descriptor)
+        }
+
+        override fun deserialize(decoder: Decoder): MultipleAnswerQuestionEGE_Base {
+            val dec: CompositeDecoder = decoder.beginStructure(descriptor)
+            var questionBase: QuestionBase? = null
+            var correctAnswer: String? = null
+            loop@ while (true) {
+                when (val i = dec.decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> questionBase = dec.decodeSerializableElement(descriptor, i, QuestionBase.serializer())
+                    1 -> correctAnswer = dec.decodeStringElement(descriptor, i)
+                    else -> throw SerializationException("Unknown index $i")
+                }
+            }
+            dec.endStructure(descriptor)
+            return MultipleAnswerQuestionEGE_Base(
+                questionBase?.questionText ?: throw MissingFieldException("questionBase"),
+                questionBase.questionID,
+                questionBase.maxGrade,
+                correctAnswer ?: throw MissingFieldException("correctOrder")
+            )
+        }
+    }
+
+}
+
+@Serializable
+class MatchQuestionEGE_Base(
+    questionText: String = "",
+    questionID: Int = 0,
+    maxGrade: Int = 1,
+    val correctAnswer: String
+) : QuestionBase(questionText, questionID, maxGrade){
+
+    @Serializer(forClass = MatchQuestionEGE_Base::class) companion object : KSerializer<MatchQuestionEGE_Base> {
+        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("MatchQuestionEGE_Base") {
+            init {
+                addElement("questionBasic")
+                addElement("correctAnswer")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: MatchQuestionEGE_Base) {
+            val compositeOutput = encoder.beginStructure(descriptor)
+            //placeholder
+            compositeOutput.endStructure(descriptor)
+        }
+
+        override fun deserialize(decoder: Decoder): MatchQuestionEGE_Base {
+            val dec: CompositeDecoder = decoder.beginStructure(descriptor)
+            var questionBase: QuestionBase? = null
+            var correctAnswer: String? = null
+            loop@ while (true) {
+                when (val i = dec.decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> questionBase = dec.decodeSerializableElement(descriptor, i, QuestionBase.serializer())
+                    1 -> correctAnswer = dec.decodeStringElement(descriptor, i)
+                    else -> throw SerializationException("Unknown index $i")
+                }
+            }
+            dec.endStructure(descriptor)
+            return MatchQuestionEGE_Base(
+                questionBase?.questionText ?: throw MissingFieldException("questionBase"),
+                questionBase.questionID,
+                questionBase.maxGrade,
+                correctAnswer ?: throw MissingFieldException("correctOrder")
+            )
+        }
+    }
+
+}
+
+@Serializable
+class PairMatchQuestionEGE_Base(
+    questionText: String = "",
+    questionID: Int = 0,
+    maxGrade: Int = 1,
+    val correctAnswer: String
+) : QuestionBase(questionText, questionID, maxGrade){
+
+    @Serializer(forClass = PairMatchQuestionEGE_Base::class) companion object : KSerializer<PairMatchQuestionEGE_Base> {
+        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("MatchQuestionEGE_Base") {
+            init {
+                addElement("questionBasic")
+                addElement("correctAnswer")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: PairMatchQuestionEGE_Base) {
+            val compositeOutput = encoder.beginStructure(descriptor)
+            //placeholder
+            compositeOutput.endStructure(descriptor)
+        }
+
+        override fun deserialize(decoder: Decoder): PairMatchQuestionEGE_Base {
+            val dec: CompositeDecoder = decoder.beginStructure(descriptor)
+            var questionBase: QuestionBase? = null
+            var correctAnswer: String? = null
+            loop@ while (true) {
+                when (val i = dec.decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> questionBase = dec.decodeSerializableElement(descriptor, i, QuestionBase.serializer())
+                    1 -> correctAnswer = dec.decodeStringElement(descriptor, i)
+                    else -> throw SerializationException("Unknown index $i")
+                }
+            }
+            dec.endStructure(descriptor)
+            return PairMatchQuestionEGE_Base(
+                questionBase?.questionText ?: throw MissingFieldException("questionBase"),
+                questionBase.questionID,
+                questionBase.maxGrade,
+                correctAnswer ?: throw MissingFieldException("correctOrder")
+            )
+        }
+    }
+
+}
+
+@Serializable
+class SequenceQuestionEGE_Base(
+    questionText: String = "",
+    questionID: Int = 0,
+    maxGrade: Int = 1,
+    val correctAnswer: String
+) : QuestionBase(questionText, questionID, maxGrade){
+
+    @Serializer(forClass = SequenceQuestionEGE_Base::class) companion object : KSerializer<SequenceQuestionEGE_Base> {
+        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("MatchQuestionEGE_Base") {
+            init {
+                addElement("questionBasic")
+                addElement("correctAnswer")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: SequenceQuestionEGE_Base) {
+            val compositeOutput = encoder.beginStructure(descriptor)
+            //placeholder
+            compositeOutput.endStructure(descriptor)
+        }
+
+        override fun deserialize(decoder: Decoder): SequenceQuestionEGE_Base {
+            val dec: CompositeDecoder = decoder.beginStructure(descriptor)
+            var questionBase: QuestionBase? = null
+            var correctAnswer: String? = null
+            loop@ while (true) {
+                when (val i = dec.decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> questionBase = dec.decodeSerializableElement(descriptor, i, QuestionBase.serializer())
+                    1 -> correctAnswer = dec.decodeStringElement(descriptor, i)
+                    else -> throw SerializationException("Unknown index $i")
+                }
+            }
+            dec.endStructure(descriptor)
+            return SequenceQuestionEGE_Base(
+                questionBase?.questionText ?: throw MissingFieldException("questionBase"),
+                questionBase.questionID,
+                questionBase.maxGrade,
+                correctAnswer ?: throw MissingFieldException("correctOrder")
+            )
+        }
+    }
+
+}
+
+@Serializable
+class OneWordQuestionEGE_Base(
+    questionText: String = "",
+    questionID: Int = 0,
+    maxGrade: Int = 1,
+    val correctAnswer: String
+) : QuestionBase(questionText, questionID, maxGrade){
+
+    @Serializer(forClass = OneWordQuestionEGE_Base::class) companion object : KSerializer<OneWordQuestionEGE_Base> {
+        override val descriptor: SerialDescriptor = object : SerialClassDescImpl("MatchQuestionEGE_Base") {
+            init {
+                addElement("questionBasic")
+                addElement("correctAnswer")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, obj: OneWordQuestionEGE_Base) {
+            val compositeOutput = encoder.beginStructure(descriptor)
+            //placeholder
+            compositeOutput.endStructure(descriptor)
+        }
+
+        override fun deserialize(decoder: Decoder): OneWordQuestionEGE_Base {
+            val dec: CompositeDecoder = decoder.beginStructure(descriptor)
+            var questionBase: QuestionBase? = null
+            var correctAnswer: String? = null
+            loop@ while (true) {
+                when (val i = dec.decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> questionBase = dec.decodeSerializableElement(descriptor, i, QuestionBase.serializer())
+                    1 -> correctAnswer = dec.decodeStringElement(descriptor, i)
+                    else -> throw SerializationException("Unknown index $i")
+                }
+            }
+            dec.endStructure(descriptor)
+            return OneWordQuestionEGE_Base(
+                questionBase?.questionText ?: throw MissingFieldException("questionBase"),
+                questionBase.questionID,
+                questionBase.maxGrade,
+                correctAnswer ?: throw MissingFieldException("correctOrder")
+            )
+        }
+    }
+
 }
 
 @Serializable
@@ -374,6 +619,11 @@ class QuestionMetadata(val questionType : String = "", val questionBase: Questio
                             "MatchQuestion" -> MatchQuestionBase.serializer()
                             "OneWordQuestion" -> OneWordQuestionBase.serializer()
                             "ChronologicalQuestion" -> ChronologicalQuestionBase.serializer()
+                            "SequenceQuestionEGE"       -> SequenceQuestionEGE_Base.serializer()
+                            "OneWordQuestionEGE"        -> OneWordQuestionEGE_Base.serializer()
+                            "MatchQuestionEGE"          -> MatchQuestionEGE_Base.serializer()
+                            "PairMatchQuestionEGE"      -> PairMatchQuestionEGE_Base.serializer()
+                            "MultipleAnswerQuestionEGE" -> MultipleAnswerQuestionEGE_Base.serializer()
                             null -> throw SerializationException("questionType is yet unknown")
                             else -> throw SerializationException("Unknown questionType")
                         }

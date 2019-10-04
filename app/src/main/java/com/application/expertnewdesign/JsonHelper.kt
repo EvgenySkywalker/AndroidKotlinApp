@@ -2,6 +2,7 @@ package com.application.expertnewdesign
 
 import com.application.expertnewdesign.navigation.MetadataNavigation
 import com.application.expertnewdesign.navigation.Subject
+import com.application.expertnewdesign.profile.QuestionObject
 import com.application.expertnewdesign.profile.User
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken

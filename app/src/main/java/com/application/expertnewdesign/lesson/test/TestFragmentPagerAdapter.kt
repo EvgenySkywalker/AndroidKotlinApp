@@ -2,6 +2,7 @@ package com.application.expertnewdesign.lesson.test
 
 import android.content.Context
 import android.graphics.drawable.Drawable
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
@@ -9,6 +10,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.lesson.test.question.Question
+import com.application.expertnewdesign.lesson.test.question.QuestionEGE
 import com.application.expertnewdesign.lesson.test.question.QuestionFragment
 import com.application.expertnewdesign.profile.QuestionObject
 
@@ -22,6 +24,10 @@ class TestFragmentPagerAdapter(fm: FragmentManager,
     var lastState: Drawable? = null
 
     init {
+        var imageSize = 70
+        if(questions.size > 10){
+            imageSize = 50
+        }
         questions.forEach {
             val dotImage = ImageView(context)
             if(it != questions[0]) {
@@ -31,6 +37,10 @@ class TestFragmentPagerAdapter(fm: FragmentManager,
             }
             dotsList.add(dotImage)
             dots.addView(dotImage)
+            val params = dotImage.layoutParams
+            params.height = imageSize
+            params.width = imageSize
+            dotImage.layoutParams = params
         }
     }
 
@@ -46,27 +56,23 @@ class TestFragmentPagerAdapter(fm: FragmentManager,
         return questions[position].toString()
     }
 
-    fun getStates(): List<QuestionObject>{
-        val states: MutableList<QuestionObject> = arrayListOf()
+    fun getGrades(): List<QuestionObject>{
+        val grades: MutableList<QuestionObject> = arrayListOf()
         for((index, element) in questions.withIndex()){
             element.check()
-            val state = element.getState()
-            when(state){
-                0->{
-                    dotsList[index].setImageResource(R.drawable.ic_dot)
-                }
-                1->{
-                    dotsList[index].setImageResource(R.drawable.ic_dot_right)
-                }
-                2->{
-                    dotsList[index].setImageResource(R.drawable.ic_dot_wrong)
-                }
+            val grade = element.earnedPoints
+            if(grade == 0){
+                dotsList[index].setImageResource(R.drawable.ic_dot_wrong)
+            }else if(grade > 0 && grade < element.questionBase.maxGrade){
+                dotsList[index].setImageResource(R.drawable.ic_dot_medium)
+            }else{
+                dotsList[index].setImageResource(R.drawable.ic_dot_right)
             }
             if(index == lastPosition){
                 lastState = dotsList[index].drawable
             }
-            states.add(QuestionObject(element.questionBase.questionID, state))
+            grades.add(QuestionObject(element.questionBase.questionID, grade))
         }
-        return states
+        return grades
     }
 }

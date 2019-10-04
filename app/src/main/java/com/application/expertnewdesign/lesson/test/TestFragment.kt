@@ -1,34 +1,46 @@
 package com.application.expertnewdesign.lesson.test
 
-import android.content.Context
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.GONE
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.ViewPager
+import com.application.expertnewdesign.BASE_URL
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.lesson.article.ArticleFragment
 import com.application.expertnewdesign.lesson.test.question.*
 import com.application.expertnewdesign.navigation.Lesson
-import com.application.expertnewdesign.navigation.NavigationLessonsFragment
 import com.application.expertnewdesign.navigation.Statistic
-import com.application.expertnewdesign.profile.ProfileFragment
-import com.application.expertnewdesign.profile.QuestionObject
-import com.application.expertnewdesign.profile.TestObject
-import kotlinx.android.synthetic.main.activity_main.*
+import com.application.expertnewdesign.profile.*
+import com.google.gson.Gson
 import kotlinx.android.synthetic.main.test_fragment.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.list
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.http.Header
+import retrofit2.http.PUT
+import retrofit2.http.Query
 import java.io.File
 import java.lang.Exception
 import java.util.*
 
-class TestFragment(val path: String) : Fragment(){
+interface TestStatAPI{
+    @PUT("updateSelfAnswers")
+    fun putTestInfo(@Header("Authorization") token: String,
+                    @Query("course") subject: String,
+                    @Query("subject") topic: String,
+                    @Query("lesson") lesson: String,
+                    @Query("answers") array: String): Call<ResponseBody>
+}
+
+class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
 
     //Для статистики
     private lateinit var lesson: Lesson
@@ -46,7 +58,7 @@ class TestFragment(val path: String) : Fragment(){
             when(it!!.itemId){
                 R.id.finish->{
                     val testAdapter = viewPager.adapter as TestFragmentPagerAdapter
-                    val resultList = testAdapter.getStates()
+                    val resultList = testAdapter.getGrades()
                     publishStat(TestObject(lesson.name, resultList))
                 }
                 else->{
@@ -101,6 +113,10 @@ class TestFragment(val path: String) : Fragment(){
             }
         })
 
+        if(!isFinal){
+            timer.visibility = GONE
+        }
+
         testBack.setOnClickListener {
             activity!!.onBackPressed()
         }
@@ -132,6 +148,13 @@ class TestFragment(val path: String) : Fragment(){
                     "MatchQuestion" -> DragQuestion(context!!, metaQuestion.questionBase as MatchQuestionBase, image)
                     "OneWordQuestion" -> OneWordQuestion(context!!, metaQuestion.questionBase as OneWordQuestionBase, image)
                     "ChronologicalQuestion" -> ChronologicalQuestion(context!!, metaQuestion.questionBase as ChronologicalQuestionBase, image)
+
+                    "OneWordQuestionEGE"        -> OneWordQuestionEGE(context!!, metaQuestion.questionBase as OneWordQuestionEGE_Base, image)
+                    "SequenceQuestionEGE"       -> SequenceQuestionEGE(context!!, metaQuestion.questionBase as SequenceQuestionEGE_Base, image)
+                    "MultipleAnswerQuestionEGE" -> MultipleAnswerQuestionEGE2(context!!, metaQuestion.questionBase as MultipleAnswerQuestionEGE_Base, image)
+                    "MatchQuestionEGE"          -> MatchQuestionEGE(context!!, metaQuestion.questionBase as MatchQuestionEGE_Base, image)
+                    "PairMatchQuestionEGE"      -> PairMatchQuestionEGE(context!!, metaQuestion.questionBase as PairMatchQuestionEGE_Base, image)
+
                     else -> throw Exception("Unknown question type")
                 }
             )
@@ -153,7 +176,7 @@ class TestFragment(val path: String) : Fragment(){
         super.onPause()
 
         val currentTime = Calendar.getInstance().timeInMillis
-        val timeInLesson = Lesson(lesson.name)
+        val timeInLesson = Lesson(path)
         timeInLesson.time = currentTime-lesson.time
         lesson.time = 0
         Thread().run {
@@ -168,8 +191,32 @@ class TestFragment(val path: String) : Fragment(){
     }
 
     private fun publishStat(stat: TestObject){
-        val profileFragment = activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment
-        profileFragment.addStat(stat)
+        putTestStat(stat, activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment)
+    }
+
+    private fun putTestStat(stat: TestObject, profileFragment: ProfileFragment){
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .build()
+
+        val testAPI = retrofit.create(TestStatAPI::class.java)
+        val (_,subject, topic, lesson) = path.split("/")
+        val token = activity!!.intent.getStringExtra("token")!!
+        val jsonStr = Gson().toJson(stat.test)
+        testAPI.putTestInfo("Token $token", subject, topic, lesson, jsonStr).enqueue(object: Callback<ResponseBody>{
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                if(response.isSuccessful){
+                    profileFragment.clearTests()
+                }else{
+                    profileFragment.addStat(stat)
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                profileFragment.addStat(stat)
+            }
+        })
     }
 
     //Для статистики

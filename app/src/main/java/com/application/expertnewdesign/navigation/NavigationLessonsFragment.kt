@@ -39,10 +39,11 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
 
     fun openLesson(){
         fragmentManager!!.beginTransaction().run{
-            add(
-                R.id.fragment_container,
+            add(R.id.fragment_container,
                 LessonLoadingFragment(lessonPath!!), "lesson_loading")
             hide(fragmentManager!!.findFragmentByTag("navigation")!!)
+            hide(fragmentManager!!.findFragmentByTag("profile")!!)
+            hide(fragmentManager!!.findFragmentByTag("chat")!!)
             addToBackStack("loading")
             commit()
         }

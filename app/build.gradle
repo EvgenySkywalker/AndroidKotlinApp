@@ -20,7 +20,7 @@ android {
         applicationId "com.application.expertnewdesign"
         minSdkVersion 19
         targetSdkVersion 29
-        versionCode 8
+        versionCode 15
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true

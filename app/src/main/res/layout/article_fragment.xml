@@ -38,7 +38,8 @@
                 android:id="@+id/viewPager"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/articleToolbar"/>
+                android:layout_below="@+id/articleToolbar"
+                android:visibility="gone"/>
 
 
         <androidx.core.widget.ContentLoadingProgressBar

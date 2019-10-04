@@ -21,12 +21,35 @@ import com.google.firebase.auth.FirebaseAuth
 import androidx.core.app.ComponentActivity.ExtraData
 import androidx.core.content.ContextCompat.getSystemService
 import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.util.MutableInt
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import com.application.expertnewdesign.chat.ChatFragment
 import com.application.expertnewdesign.lesson.test.TestFragment
+import com.application.expertnewdesign.lesson.test.TestStatAPI
+import com.application.expertnewdesign.profile.TestObject
+import com.application.expertnewdesign.profile.TimeObject
+import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_login.*
 import kotlinx.android.synthetic.main.activity_main.container
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.http.Header
+import retrofit2.http.PUT
+import retrofit2.http.Query
 
+
+interface LessonStatAPI{
+    @PUT("updateSelfTimeSpent")
+    fun putLessonInfo(@Header("Authorization") token: String,
+                    @Query("course") subject: String,
+                    @Query("subject") topic: String,
+                    @Query("lesson") lesson: String,
+                    @Query("timeSpent") timeSpent: String): Call<ResponseBody>
+}
 
 class MainActivity : AppCompatActivity() {
 
@@ -226,7 +249,39 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
 
-        val json = JsonHelper(filesDir.path)
-        json.toJson(profileFragment!!.user)
+        Thread().run{
+            val user = profileFragment!!.user
+            user.lessonsStat.forEach {
+                putLessonStat(it, profileFragment!!, 4)
+            }
+        }
+    }
+
+    private fun putLessonStat(stat: TimeObject, profileFragment: ProfileFragment, tries: Int){
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .build()
+
+        val lessonAPI = retrofit.create(LessonStatAPI::class.java)
+        val (_,subject, topic, lesson) = stat.lesson.split("/")
+        val token = intent.getStringExtra("token")!!
+        lessonAPI.putLessonInfo("Token $token", subject, topic, lesson, stat.time.toString()).enqueue(object:
+            Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                if(response.isSuccessful){
+                    profileFragment.clearLessons()
+                }else{
+                    if(tries > 0) {
+                        putLessonStat(stat, profileFragment, tries-1)
+                    }
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                val json = JsonHelper(filesDir.path)
+                json.toJson(profileFragment.user)
+            }
+        })
     }
 }

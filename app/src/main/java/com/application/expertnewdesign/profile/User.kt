@@ -29,7 +29,7 @@ class TestObject(
     val test: List<QuestionObject>)
 
 class QuestionObject(
-    @SerializedName("QuestionID")
+    @SerializedName("questionID")
     val questionID: Int,
-    @SerializedName("Status")
+    @SerializedName("status")
     val status: Int)

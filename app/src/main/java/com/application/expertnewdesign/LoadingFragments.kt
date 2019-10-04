@@ -30,12 +30,16 @@ import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.application.expertnewdesign.authorization.ui.login.LoginActivity
 import com.application.expertnewdesign.navigation.MetadataNavigation
 import com.application.expertnewdesign.navigation.NavigationLessonsFragment
 import com.application.expertnewdesign.profile.User
 import kotlinx.android.synthetic.main.activity_main.*
+import okhttp3.OkHttpClient
 import retrofit2.http.*
 import java.io.*
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.math.roundToInt
 
 
@@ -54,7 +58,7 @@ interface MetadataAPI {
     fun loadMetadata(@Header("Authorization") token: String): Call<MetadataNavigation>
 }
 
-val BASE_URL: String = "http://35.228.251.136:8080/"//172.18.10.45
+val BASE_URL: String = "http://172.18.10.45:8080/"//172.18.10.45   35.228.251.136
 
 class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 
@@ -85,8 +89,18 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
                 json.toJson(metadata)
             }
         } else {
+            if(response.raw().message() == "Unauthorized"){
+                Toast.makeText(context, "Пользователь более не действителен", Toast.LENGTH_SHORT).show()
+                Thread().run{
+                    val file = File("${activity!!.filesDir.path}/token.txt")
+                    file.delete()
+                }
+                val intent = Intent(activity, LoginActivity::class.java)
+                activity!!.startActivity(intent)
+                activity!!.finish()
+            }
             infinite_loading.visibility = GONE
-            loading_stat.text = "Ошибка запроса"
+            loading_stat.text = "Ошибка входа"
         }
     }
 
@@ -112,7 +126,7 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
             .create()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)//"http://36.207.89.62:8080/"
+            .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 
@@ -133,14 +147,19 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
 
     override fun onStart() {
         super.onStart()
-        registerReceiver()
         getLesson()
     }
 
     private fun getLesson() {
+            val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
+            val intentFilter = IntentFilter()
+            intentFilter.addAction(lessonPath)
+
             intent = Intent(context, DownloadService::class.java)
             intent.putExtra("path", lessonPath)
             intent.putExtra("token", activity!!.intent.getStringExtra("token"))
+
+            bManager.registerReceiver(broadcastReceiver, intentFilter)
             activity!!.startService(intent)
     }
 
@@ -162,23 +181,19 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
         }
     }
 
-    private fun registerReceiver() {
-
-        val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
-        val intentFilter = IntentFilter()
-        intentFilter.addAction("message_progress")
-        bManager.registerReceiver(broadcastReceiver, intentFilter)
-
-    }
-
     private val broadcastReceiver = object : BroadcastReceiver() {
+
         override fun onReceive(context: Context, _intent: Intent) {
 
-            if (_intent.action == "message_progress") {
+            if (_intent.action == lessonPath) {
 
                 val download = _intent.getParcelableExtra<Download>("download")
-                if(horizontalProgress != null)
+                if(horizontalProgress != null) {
+                    if(horizontalProgress.progress > download!!.progress){
+                        return
+                    }
                     horizontalProgress.progress = download!!.progress
+                }
                 if (download!!.progress == 100) {
                     val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
                     bManager.unregisterReceiver(this)
@@ -219,12 +234,24 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
                                 download.totalFileSize
                             )
                 }
+            }else{
+                val download = _intent.getParcelableExtra<Download>("download")
+                if (download!!.progress == 100) {
+                    Thread().run {
+                        val path = "${context.getExternalFilesDir(null).toString()}${_intent.action}"
+                        val dir = File(path)
+
+                        val zipFile = File(path, "lesson.zip")
+                        zipFile.unzipLesson(dir)
+                        zipFile.delete()
+                    }
+                }
             }
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onStop() {
+        super.onStop()
         val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
         bManager.unregisterReceiver(broadcastReceiver)
         activity!!.stopService(intent)
@@ -233,25 +260,11 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
 
 class DownloadService : IntentService("Download Service") {
 
-    val CHANNEL_ID = "loading_lesson"
     private lateinit var lessonPath: String
     private lateinit var token: String
-    private lateinit var  notificationBuilder: NotificationCompat.Builder
-    private lateinit var notificationManager: NotificationManager
     private var totalFileSize: Int = 0
 
     override fun onHandleIntent(intent: Intent?) {
-
-        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Загрузка")
-            .setContentText("Скачивание урока")
-            .setSmallIcon(R.drawable.ic_download)
-            .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
-            .setAutoCancel(true)
-
-        notificationManager.notify(0, notificationBuilder.build())
 
         lessonPath = intent!!.getStringExtra("path")!!
         token = intent.getStringExtra("token")!!
@@ -261,8 +274,14 @@ class DownloadService : IntentService("Download Service") {
 
     fun initDownload(){
 
+        val innerClient = OkHttpClient.Builder()
+            .connectTimeout(0, TimeUnit.MINUTES)
+            .readTimeout(1, TimeUnit.MINUTES) // read timeout
+            .build()
+
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
+            .client(innerClient)
             .build()
 
         val lessonAPI = retrofit.create(LessonAPI::class.java)
@@ -274,7 +293,7 @@ class DownloadService : IntentService("Download Service") {
 
             downloadFile(request.execute().body())
 
-        } catch (e: IllegalStateException) {
+        } catch (e: TimeoutException) {
 
             Toast.makeText(applicationContext, e.message, Toast.LENGTH_SHORT).show()
 
@@ -331,16 +350,12 @@ class DownloadService : IntentService("Download Service") {
     }
 
     private fun sendNotification(download: Download){
-
         sendIntent(download)
-        notificationBuilder.setProgress(100,download.progress,false)
-        notificationBuilder.setContentText("Загрузка урока ${download.currentFileSize}/$totalFileSize КБ")
-        notificationManager.notify(0, notificationBuilder.build())
     }
 
     private fun sendIntent(download: Download){
 
-        val intent = Intent("message_progress")
+        val intent = Intent(lessonPath)
         intent.putExtra("download",download)
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
@@ -350,18 +365,7 @@ class DownloadService : IntentService("Download Service") {
         val download = Download()
         download.progress = 100
         sendIntent(download)
-
-        notificationManager.cancel(0)
-        notificationBuilder.setProgress(0,0,false)
-        notificationBuilder.setContentText("Урок загружен")
-        notificationManager.notify(0, notificationBuilder.build())
     }
-
-    override fun onTaskRemoved(rootIntent: Intent) {
-        notificationManager.cancel(0)
-        super.onTaskRemoved(rootIntent)
-    }
-
 }
 
 class Download() : Parcelable {
