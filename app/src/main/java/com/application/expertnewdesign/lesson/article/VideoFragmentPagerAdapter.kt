@@ -13,7 +13,7 @@ class VideoFragmentPagerAdapter(private val listVideo: List<String>, fm: Fragmen
     }
 
     override fun getItem(position: Int): Fragment {
-        val newFragment = VideoFragment(listVideo[position])
+        val newFragment = VideoFragment(listVideo[position], position == 0)
         fragmentsList.add(newFragment)
         return newFragment
     }

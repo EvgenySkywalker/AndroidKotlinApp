@@ -13,9 +13,9 @@ import kotlinx.android.synthetic.main.video_fragment.*
 
 
 
-class VideoFragment (val code: String): Fragment(){
+class VideoFragment (val code: String, val isFirst: Boolean = false): Fragment(){
 
-    interface Layout{
+    interface PlayerLayout{
         fun height(_height: Int)
         fun fullScreen(isFullScreen: Boolean)
     }
@@ -29,15 +29,20 @@ class VideoFragment (val code: String): Fragment(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setYouTubePlayer()
+    }
+
+    private fun setYouTubePlayer(){
         lifecycle.addObserver(video)
         video.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
             override fun onReady(youTubePlayer: YouTubePlayer) {
                 youTubePlayer.cueVideo(code, 0f)
                 initializedYouTubePlayer = youTubePlayer
-                val fragment = activity!!.supportFragmentManager.findFragmentByTag("article") as ArticleFragment
-                if(!fragment.done){
+
+                if(isFirst){
+                    val fragment = activity!!.supportFragmentManager.findFragmentByTag("article") as ArticleFragment
                     fragment.height(video.measuredHeight)
-                    fragment.done = true
+                    fragment.hasHeight = true
                 }
             }
         })
