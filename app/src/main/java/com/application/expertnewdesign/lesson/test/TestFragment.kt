@@ -30,6 +30,10 @@ import retrofit2.http.Query
 import java.io.File
 import java.lang.Exception
 import java.util.*
+import androidx.core.os.HandlerCompat.postDelayed
+import android.os.Handler
+import android.view.View.VISIBLE
+
 
 interface TestStatAPI{
     @PUT("updateSelfAnswers")
@@ -40,10 +44,28 @@ interface TestStatAPI{
                     @Query("answers") array: String): Call<ResponseBody>
 }
 
-class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
+class TestFragment(val path: String, private val isFinal: Boolean = false) : Fragment(){
 
     //Для статистики
     private lateinit var lesson: Lesson
+
+    private var startTime: Long = 0
+    val timerHandler = Handler()
+    private val timerRunnable = object : Runnable {
+
+        override fun run() {
+            val millis = System.currentTimeMillis() - startTime
+            var seconds = ((60000*20-millis) / 1000).toInt()
+            val minutes = seconds / 60
+            seconds %= 60
+
+            if(timer != null) {
+                timer.text = String.format("%02d:%02d", minutes, seconds)
+            }
+
+            timerHandler.postDelayed(this, 500)
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         setHasOptionsMenu(true)
@@ -59,7 +81,10 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
                 R.id.finish->{
                     val testAdapter = viewPager.adapter as TestFragmentPagerAdapter
                     val resultList = testAdapter.getGrades()
-                    publishStat(TestObject(lesson.name, resultList))
+                    if(isFinal) {
+                        publishStat(TestObject(lesson.name, resultList))
+                        it.isVisible = false
+                    }
                 }
                 else->{
                     super.onOptionsItemSelected(it)
@@ -70,6 +95,11 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
 
         //Для статистики
         setLesson()
+        if(isFinal){
+            timer.visibility = VISIBLE
+            startTime = System.currentTimeMillis()
+            timerHandler.postDelayed(timerRunnable, 1000)
+        }
 
         //Тут распарсить вопросики
         val list = setTest()
@@ -112,10 +142,6 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
 
             }
         })
-
-        if(!isFinal){
-            timer.visibility = GONE
-        }
 
         testBack.setOnClickListener {
             activity!!.onBackPressed()
@@ -163,7 +189,7 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
         return questions
     }
 
-    //Для статистики
+    //Время
     override fun onResume() {
         super.onResume()
 
@@ -171,29 +197,31 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
         lesson.time = currentTime
     }
 
-    //Для статистики
+    //Время
     override fun onPause() {
         super.onPause()
 
         val currentTime = Calendar.getInstance().timeInMillis
         val timeInLesson = Lesson(path)
-        timeInLesson.time = currentTime-lesson.time
+        timeInLesson.time = currentTime - lesson.time
         lesson.time = 0
         Thread().run {
             publishStat(timeInLesson)
         }
     }
 
-    //Для статистики
+    //Время
     private fun publishStat(stat: Statistic){
         val profileFragment = activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment
         profileFragment.addStat(stat)
     }
 
+    //Ответы
     private fun publishStat(stat: TestObject){
         putTestStat(stat, activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment)
     }
 
+    //Ответы
     private fun putTestStat(stat: TestObject, profileFragment: ProfileFragment){
 
         val retrofit = Retrofit.Builder()
@@ -223,5 +251,12 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
     private fun setLesson(){
         val articleFragment = fragmentManager!!.findFragmentByTag("article") as ArticleFragment
         lesson = Lesson(articleFragment.lesson.name, null)
+    }
+
+    override fun onDestroy() {
+        if(isFinal) {
+            timerHandler.removeCallbacks(timerRunnable)
+        }
+        super.onDestroy()
     }
 }

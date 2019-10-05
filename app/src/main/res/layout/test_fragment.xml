@@ -68,7 +68,8 @@
                 android:textSize="22sp"
                 android:textColor="#E0E0E0"
                 android:paddingStart="20dp"
-                android:paddingEnd="20dp"/>
+                android:paddingEnd="20dp"
+                android:visibility="gone"/>
 
     </androidx.appcompat.widget.Toolbar>
 
