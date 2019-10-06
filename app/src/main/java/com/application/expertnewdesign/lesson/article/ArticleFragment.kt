@@ -2,9 +2,13 @@ package com.application.expertnewdesign.lesson.article
 
 import android.content.Context.AUDIO_SERVICE
 import android.content.pm.ActivityInfo
+import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.os.Handler
 import android.view.*
 import android.view.View.*
 import android.widget.LinearLayout
@@ -14,15 +18,14 @@ import androidx.viewpager.widget.ViewPager
 import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.lesson.test.TestFragment
-import com.application.expertnewdesign.lesson.test.question.QuestionMetadata
 import com.application.expertnewdesign.navigation.Lesson
 import com.application.expertnewdesign.navigation.Statistic
 import com.application.expertnewdesign.profile.ProfileFragment
 import com.github.barteksc.pdfviewer.util.FitPolicy
 import kotlinx.android.synthetic.main.article_fragment.*
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
-import kotlinx.serialization.list
+import kotlinx.android.synthetic.main.article_fragment.tabs
+import kotlinx.android.synthetic.main.article_fragment.viewPager
+import kotlinx.android.synthetic.main.music_player.*
 import java.io.File
 import java.lang.StringBuilder
 import java.util.*
@@ -31,14 +34,41 @@ import java.util.*
 
 class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
 
-    private var playlist: List<String>? = null
     private var mediaPlayer: MediaPlayer? = null
     private var audioManager: AudioManager? = null
-    private var timeInLesson: Long = 0
 
+    private var duration: Int = 0
+    private var lastSeekTime: Long = 0
+    val timerHandler = Handler()
+    private val timerRunnable = object : Runnable {
+
+        override fun run() {
+
+            if(mediaPlayer!!.isPlaying) {
+
+                val millis = mediaPlayer!!.currentPosition
+                val allSeconds = millis/1000
+                val minutes = allSeconds/60
+                val seconds = allSeconds%60
+
+                if (currentPosition != null) {
+                    progress.progress = ((allSeconds.toFloat()/duration.toFloat())*100).toInt()
+                    currentPosition.text = String.format(
+                        "%d:%02d / %d:%02d", minutes, seconds, duration/60, duration%60)
+                }
+
+            }
+
+            timerHandler.postDelayed(this, 500)
+        }
+    }
+
+    private var playlist: List<String>? = null
     var hasHeight: Boolean = false
     var lastPage: Int = 0
     var height: Int? = null
+
+    private var timeInLesson: Long = 0
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         setHasOptionsMenu(true)
@@ -49,6 +79,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         super.onViewCreated(view, savedInstanceState)
 
         setToolbar()
+        setMusicPlayer()
         setPlaylist()
         setPdf()
         showTest()
@@ -59,15 +90,25 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         articleBack.setOnClickListener {
             activity!!.onBackPressed()
         }
+
         articleToolbar.setOnMenuItemClickListener {
             when(it!!.itemId){
                 R.id.playAudio->{
-                    releaseMP()
-                    audioManager = activity!!.getSystemService(AUDIO_SERVICE) as AudioManager
-                    mediaPlayer = MediaPlayer()
-                    mediaPlayer!!.setDataSource("${activity!!.getExternalFilesDir(null)}/audio.mp3")
-                    mediaPlayer!!.prepare()
-                    mediaPlayer!!.start()
+                    if(mediaPlayer == null) {
+                        mediaPlayer = MediaPlayer()
+                        mediaPlayer!!.setDataSource("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3")
+                        mediaPlayer!!.prepare()
+                        mediaPlayer!!.start()
+                        musicPlayer.visibility = VISIBLE
+                        duration = mediaPlayer!!.duration/1000
+                        timerHandler.post(timerRunnable)
+                    }else {
+                        if(musicPlayer.visibility == GONE){
+                            musicPlayer.visibility = VISIBLE
+                        }else{
+                            musicPlayer.visibility = GONE
+                        }
+                    }
                 }
                 R.id.toTest->{
                     if(viewPager.adapter != null) {
@@ -116,6 +157,51 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
                 }
             }
             true
+        }
+    }
+
+    private fun setMusicPlayer(){
+        audioManager = activity!!.getSystemService(AUDIO_SERVICE) as AudioManager
+        progress.progressDrawable.colorFilter = PorterDuffColorFilter(Color.RED, PorterDuff.Mode.SRC_IN)
+
+        if(File("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3").exists()){
+            articleToolbar.menu.findItem(R.id.playAudio).isVisible = true
+        }
+
+        musicPause.setOnClickListener {
+            if(mediaPlayer!!.isPlaying){
+                mediaPlayer!!.pause()
+            }
+            musicPause.visibility = GONE
+            musicPlay.visibility = VISIBLE
+        }
+
+        musicPlay.setOnClickListener {
+            if(!mediaPlayer!!.isPlaying){
+                mediaPlayer!!.start()
+            }
+            musicPause.visibility = VISIBLE
+            musicPlay.visibility = GONE
+        }
+
+        musicBackward.setOnClickListener {
+            val currentTime = Calendar.getInstance().timeInMillis
+            if(currentTime - lastSeekTime > 500) {
+                mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition - 5000)
+            }else{
+                mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition - 12000)
+            }
+            lastSeekTime = currentTime
+        }
+
+        musicForward.setOnClickListener {
+            val currentTime = Calendar.getInstance().timeInMillis
+            if(currentTime - lastSeekTime > 500) {
+                mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition + 5000)
+            }else{
+                mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition + 12000)
+            }
+            lastSeekTime = currentTime
         }
     }
 
@@ -178,7 +264,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
 
     private fun showTest(){
         val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
-        if(file.exists()) {
+        /*if(file.exists()) {
             val meta = Json(JsonConfiguration.Stable).parse(
                 QuestionMetadata.serializer().list,
                 file.readText()
@@ -186,7 +272,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
             if (meta.isNotEmpty()) {
                 articleToolbar.menu.findItem(R.id.toTest).isVisible = true
             }
-        }
+        }*/
     }
 
     override fun height(_height: Int) {
@@ -267,8 +353,8 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-
+        timerHandler.removeCallbacks(timerRunnable)
         releaseMP()
+        super.onDestroy()
     }
 }
