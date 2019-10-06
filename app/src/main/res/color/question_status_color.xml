@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+>
+  <item
+    app:incorrect="true"
+    app:partially_correct="false"
+    app:correct="false"
+    android:color="#ffD73838" />
+  <item
+    app:incorrect="false"
+    app:partially_correct="true"
+    app:correct="false"
+    android:color="#ffD8E433" />
+  <item
+    app:incorrect="false"
+    app:partially_correct="false"
+    app:correct="true"
+    android:color="#ff53BA3E" />
+  <item
+    android:color="@color/colorPrimary" />
+</selector>

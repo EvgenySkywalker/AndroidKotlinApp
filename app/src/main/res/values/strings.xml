@@ -11,5 +11,7 @@
     <string name="action_sign_in_short">Sign in</string>
     <string name="welcome">"Welcome !"</string>
 
+    <string name="lorem">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Assumenda doloremque dolorum exercitationem magni maiores, nobis officiis quia quisquam reprehenderit sunt. Accusantium alias aliquid beatae dolorum nostrum obcaecati pariatur sapiente ut?</string>
+    <string name="enter_text_here">Введите ответ</string>
 
 </resources>

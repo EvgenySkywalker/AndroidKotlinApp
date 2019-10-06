@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:paddingStart="15dp"
+  android:paddingEnd="15dp"
+  android:paddingTop="10dp"
+  android:id="@+id/question"
+  >
+
+  <com.application.expertnewdesign.lesson.test.question.QuestionStatus
+    android:id="@+id/status"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:background="@drawable/question_status"
+    android:layout_marginBottom="10dp"
+    android:text="0/3"
+    android:textAlignment="center"
+    android:padding="3dp"
+    android:textColor="@android:color/black"
+  />
+
+  <!-- <com.application.expertnewdesign.lesson.test.question.QuestionStatus
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/status"
+    android:text="asd"
+    android:background="@drawable/question_status"
+    /> -->
+
+  <ScrollView
+    android:id="@+id/scroll"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:background="@drawable/question_base"
+    android:fadeScrollbars="false"
+    >
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:orientation="vertical"
+      android:padding="5dp"
+      >
+
+      <TextView
+        android:id="@+id/questionText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/lorem"
+        android:layout_marginBottom="10dp"
+        android:textSize="18sp"
+        />
+
+      <ImageView
+        android:id="@+id/image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        />
+
+    </LinearLayout>
+
+  </ScrollView>
+
+</LinearLayout>

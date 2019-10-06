@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <declare-styleable name="question_state">
+    <attr name="incorrect" format="boolean" />
+    <attr name="partially_correct" format="boolean" />
+    <attr name="correct" format="boolean" />
+  </declare-styleable>
+</resources>

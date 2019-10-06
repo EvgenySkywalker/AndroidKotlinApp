@@ -58,7 +58,7 @@ interface MetadataAPI {
     fun loadMetadata(@Header("Authorization") token: String): Call<MetadataNavigation>
 }
 
-val BASE_URL: String = "http://172.18.10.45:8080/"//172.18.10.45   35.228.251.136
+val BASE_URL: String = "http://35.228.251.136:8080/"//172.18.10.45   35.228.251.136
 
 class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
 

@@ -143,19 +143,20 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
 
             questions.add(
                 when(metaQuestion.questionType){
-                    "SingleAnswerQuestion" -> SingleAnswerQuestion(context!!, metaQuestion.questionBase as SingleAnswerQuestionBase, image)
-                    "MultipleAnswerQuestion" -> MultipleAnswerQuestion(context!!, metaQuestion.questionBase as MultipleAnswerQuestionBase, image)
-                    "MatchQuestion" -> DragQuestion(context!!, metaQuestion.questionBase as MatchQuestionBase, image)
-                    "OneWordQuestion" -> OneWordQuestion(context!!, metaQuestion.questionBase as OneWordQuestionBase, image)
-                    "ChronologicalQuestion" -> ChronologicalQuestion(context!!, metaQuestion.questionBase as ChronologicalQuestionBase, image)
+                    //"SingleAnswerQuestion" -> SingleAnswerQuestion(context!!, metaQuestion.questionBase as SingleAnswerQuestionBase, image)
+                    //"MultipleAnswerQuestion" -> MultipleAnswerQuestion(context!!, metaQuestion.questionBase as MultipleAnswerQuestionBase, image)
+                    //"MatchQuestion" -> DragQuestion(context!!, metaQuestion.questionBase as MatchQuestionBase, image)
+                    //"OneWordQuestion" -> OneWordQuestion(context!!, metaQuestion.questionBase as OneWordQuestionBase, image)
+                    //"ChronologicalQuestion" -> ChronologicalQuestion(context!!, metaQuestion.questionBase as ChronologicalQuestionBase, image)
 
                     "OneWordQuestionEGE"        -> OneWordQuestionEGE(context!!, metaQuestion.questionBase as OneWordQuestionEGE_Base, image)
                     "SequenceQuestionEGE"       -> SequenceQuestionEGE(context!!, metaQuestion.questionBase as SequenceQuestionEGE_Base, image)
-                    "MultipleAnswerQuestionEGE" -> MultipleAnswerQuestionEGE2(context!!, metaQuestion.questionBase as MultipleAnswerQuestionEGE_Base, image)
+                    "MultipleAnswerQuestionEGE" -> MultipleAnswerQuestionEGE(context!!, metaQuestion.questionBase as MultipleAnswerQuestionEGE_Base, image)
                     "MatchQuestionEGE"          -> MatchQuestionEGE(context!!, metaQuestion.questionBase as MatchQuestionEGE_Base, image)
                     "PairMatchQuestionEGE"      -> PairMatchQuestionEGE(context!!, metaQuestion.questionBase as PairMatchQuestionEGE_Base, image)
 
                     else -> throw Exception("Unknown question type")
+                    //else -> Question(context!!, null, metaQuestion.questionBase, image)
                 }
             )
         }
