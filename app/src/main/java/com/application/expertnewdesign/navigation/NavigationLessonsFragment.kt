@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.*
 import android.view.View.*
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.application.expertnewdesign.LessonLoadingFragment
@@ -15,6 +16,7 @@ import java.lang.StringBuilder
 import java.util.*
 
 class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
+
     val subjectList: List<Subject> = metadata.subjectList
     var currentSubject: Subject? = null
     var currentTopic: Topic? = null
@@ -28,12 +30,16 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        //toolbar.inflateMenu(R.menu.navigation_lessons)
         val activity = activity!! as MainActivity
         activity.navigationLessonsFragment = this
+
+        setToolbar()
         showSubjects()
+    }
+
+    private fun setToolbar(){
         navigationBack.setOnClickListener {
-            activity.onBackPressed()
+            activity!!.onBackPressed()
         }
     }
 
@@ -151,10 +157,10 @@ class CustomAdapter(context: Context, private val items: List<Statistic>) :
         return items.size
     }
 
-    inner class ViewHolder internal constructor(view: View) : RecyclerView.ViewHolder(view), View.OnClickListener {
-        //val image = view.image
-        val title = view.title
-        val subtitle = view.subtitle
+    inner class ViewHolder internal constructor(view: View) : RecyclerView.ViewHolder(view), OnClickListener {
+
+        val title: TextView = view.title
+        val subtitle: TextView = view.subtitle
 
         init {
             view.setOnClickListener(this)

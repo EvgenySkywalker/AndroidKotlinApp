@@ -152,17 +152,17 @@ class TestFragment(val path: String, private val isFinal: Boolean = false) : Fra
 
     //С этим делай че хошь. Будет кайф, если будет выплевывать вопросики
     private fun setQuestions(){
-        val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
+        val src = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
 
         val directory = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).toString())
 
-        val meta = Json(JsonConfiguration.Stable).parse(QuestionMetadata.serializer().list, file.readText())
+        val meta = Json(JsonConfiguration.Stable).parse(QuestionMetadata.serializer().list, src.readText())
 
         val questions = emptyList<Question>().toMutableList()
 
         meta.forEach { metaQuestion ->
             var image : File? = null
-            for(file in directory.listFiles()){
+            for(file in directory.listFiles()!!){
                 if(file.name.split(".")[0] == metaQuestion.questionBase.questionID.toString()){
                     image = file
                     break

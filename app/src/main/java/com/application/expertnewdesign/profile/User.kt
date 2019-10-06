@@ -16,19 +16,19 @@ class User{
     var testsStat: List<TestObject> = emptyList()
 }
 
-class TimeObject(
+data class TimeObject(
     @SerializedName("lesson")
     val lesson: String,
     @SerializedName("time")
     var time: Long)
 
-class TestObject(
+data class TestObject(
     @SerializedName("lesson")
     val lesson: String,
     @SerializedName("test")
     val test: List<QuestionObject>)
 
-class QuestionObject(
+data class QuestionObject(
     @SerializedName("questionID")
     val questionID: Int,
     @SerializedName("status")
