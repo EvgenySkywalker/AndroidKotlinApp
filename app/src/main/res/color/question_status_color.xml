@@ -19,5 +19,5 @@
     app:correct="true"
     android:color="#ff53BA3E" />
   <item
-    android:color="@color/colorPrimary" />
+    android:color="@color/colorTitle" />
 </selector>

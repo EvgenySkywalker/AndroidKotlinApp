@@ -533,8 +533,9 @@ class OneWordQuestionEGE_Base(
     questionText: String = "",
     questionID: Int = 0,
     maxGrade: Int = 1,
-    val correctAnswer: String
-) : QuestionBase(questionText, questionID, maxGrade){
+    val correctAnswers: List<String>
+)    : QuestionBase(questionText, questionID, maxGrade)
+{
 
     @Serializer(forClass = OneWordQuestionEGE_Base::class) companion object : KSerializer<OneWordQuestionEGE_Base> {
         override val descriptor: SerialDescriptor = object : SerialClassDescImpl("MatchQuestionEGE_Base") {
@@ -553,12 +554,12 @@ class OneWordQuestionEGE_Base(
         override fun deserialize(decoder: Decoder): OneWordQuestionEGE_Base {
             val dec: CompositeDecoder = decoder.beginStructure(descriptor)
             var questionBase: QuestionBase? = null
-            var correctAnswer: String? = null
+            var correctAnswers: List<String>? = null
             loop@ while (true) {
                 when (val i = dec.decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
                     0 -> questionBase = dec.decodeSerializableElement(descriptor, i, QuestionBase.serializer())
-                    1 -> correctAnswer = dec.decodeStringElement(descriptor, i)
+                    1 -> correctAnswers = dec.decodeSerializableElement(descriptor, i, String.serializer().list)
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
@@ -567,7 +568,7 @@ class OneWordQuestionEGE_Base(
                 questionBase?.questionText ?: throw MissingFieldException("questionBase"),
                 questionBase.questionID,
                 questionBase.maxGrade,
-                correctAnswer ?: throw MissingFieldException("correctOrder")
+                correctAnswers ?: throw MissingFieldException("correctOrder")
             )
         }
     }

@@ -22,14 +22,6 @@
     android:textColor="@android:color/black"
   />
 
-  <!-- <com.application.expertnewdesign.lesson.test.question.QuestionStatus
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:id="@+id/status"
-    android:text="asd"
-    android:background="@drawable/question_status"
-    /> -->
-
   <ScrollView
     android:id="@+id/scroll"
     android:layout_width="match_parent"

@@ -25,7 +25,9 @@ import com.application.expertnewdesign.R
 import kotlinx.android.synthetic.main.question.view.*
 import kotlinx.android.synthetic.main.question_ege.view.*
 import kotlinx.android.synthetic.main.question_fragment.view.*
+import kotlinx.android.synthetic.main.single_answer_question_modified.view.*
 import java.io.File
+import java.util.*
 import java.util.jar.Attributes
 
 fun String.padAnswer(toLength : Int) : String{
@@ -122,7 +124,14 @@ class OneWordQuestionEGE(context: Context, questionBase: OneWordQuestionEGE_Base
     }
 
     override fun grade() {
+        val correctAnswers = (questionBase as OneWordQuestionEGE_Base).correctAnswers
+        val answer = answer.text.toString()
 
+        correctAnswers.forEach { ans ->
+            if(ans.toLowerCase(Locale.ROOT) == answer.toLowerCase(Locale.ROOT)){
+                earnedPoints = questionBase.maxGrade
+            }
+        }
     }
 }
 
@@ -252,6 +261,74 @@ class PairMatchQuestionEGE(context: Context, questionBase: PairMatchQuestionEGE_
 // Modified section
 
 abstract class QuestionModified(){
+}
+
+class SingleAnswerQuestionModified(context: Context, questionBase: SingleAnswerQuestionBase, image: File?)
+    : Question(context, R.layout.single_answer_question_modified, questionBase, image)
+{
+
+    val radioButtons = Array(questionBase.incorrectAnswers.size + 1){RadioButton(context)}
+
+    init{
+        val allOptions : MutableList<String> = emptyList<String>().toMutableList()
+        allOptions.add(questionBase.correctAnswer)
+        allOptions.addAll(questionBase.incorrectAnswers)
+        allOptions.shuffle()
+
+        allOptions.forEachIndexed { index, value ->
+            radioButtons[index].text = value
+            radioGroup.addView(radioButtons[index])
+        }
+    }
+
+
+    override fun grade() {
+        val correctAnswer = (questionBase as SingleAnswerQuestionBase).correctAnswer
+
+        radioButtons.forEach {
+            if(it.isChecked && it.text.toString() == correctAnswer){
+                earnedPoints = questionBase.maxGrade
+            }
+        }
+    }
+
+}
+
+class MultipleAnswerQuestion(context: Context, questionBase: MultipleAnswerQuestionBase, image: File?)
+    : Question(context, R.layout.question, questionBase, image)
+{
+    private val checkBoxes = Array(questionBase.correctAnswers.size + questionBase.incorrectAnswers.size){CheckBox(context)}
+
+    init{
+        val allOptions = emptyList<String>().toMutableList()
+        allOptions.addAll(questionBase.correctAnswers)
+        allOptions.addAll(questionBase.incorrectAnswers)
+        allOptions.shuffle()
+
+        allOptions.forEachIndexed { index, s ->
+            checkBoxes[index].text = s
+            addView(checkBoxes[index])
+        }
+    }
+
+    override fun grade() {
+        val correctAnswers = (questionBase as MultipleAnswerQuestionBase).correctAnswers
+
+        var mistakes = 0
+        checkBoxes.forEach { checkBox ->
+            if(checkBox.isChecked){
+                if(!correctAnswers.contains(checkBox.text.toString()))
+                    ++mistakes
+            } else {
+                if(correctAnswers.contains(checkBox.text.toString()))
+                    ++mistakes
+            }
+        }
+
+        val result = questionBase.maxGrade - mistakes
+        earnedPoints = if(result > 0) result else 0
+    }
+
 }
 
 /*fun setDefaultBorder(view : View) {

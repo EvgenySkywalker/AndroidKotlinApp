@@ -171,8 +171,8 @@ class TestFragment(val path: String, private val isFinal: Boolean = false) : Fra
 
             questions.add(
                 when(metaQuestion.questionType){
-                    //"SingleAnswerQuestion" -> SingleAnswerQuestion(context!!, metaQuestion.questionBase as SingleAnswerQuestionBase, image)
-                    //"MultipleAnswerQuestion" -> MultipleAnswerQuestion(context!!, metaQuestion.questionBase as MultipleAnswerQuestionBase, image)
+                    "SingleAnswerQuestion" -> SingleAnswerQuestionModified(context!!, metaQuestion.questionBase as SingleAnswerQuestionBase, image)
+                    "MultipleAnswerQuestion" -> MultipleAnswerQuestion(context!!, metaQuestion.questionBase as MultipleAnswerQuestionBase, image)
                     //"MatchQuestion" -> DragQuestion(context!!, metaQuestion.questionBase as MatchQuestionBase, image)
                     //"OneWordQuestion" -> OneWordQuestion(context!!, metaQuestion.questionBase as OneWordQuestionBase, image)
                     //"ChronologicalQuestion" -> ChronologicalQuestion(context!!, metaQuestion.questionBase as ChronologicalQuestionBase, image)
@@ -184,7 +184,6 @@ class TestFragment(val path: String, private val isFinal: Boolean = false) : Fra
                     "PairMatchQuestionEGE"      -> PairMatchQuestionEGE(context!!, metaQuestion.questionBase as PairMatchQuestionEGE_Base, image)
 
                     else -> throw Exception("Unknown question type")
-                    //else -> Question(context!!, null, metaQuestion.questionBase, image)
                 }
             )
         }
