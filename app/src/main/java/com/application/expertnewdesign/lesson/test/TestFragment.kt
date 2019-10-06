@@ -3,13 +3,11 @@ package com.application.expertnewdesign.lesson.test
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.GONE
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.ViewPager
 import com.application.expertnewdesign.BASE_URL
 import com.application.expertnewdesign.R
-import com.application.expertnewdesign.lesson.article.ArticleFragment
 import com.application.expertnewdesign.lesson.test.question.*
 import com.application.expertnewdesign.navigation.Lesson
 import com.application.expertnewdesign.navigation.Statistic
@@ -30,6 +28,9 @@ import retrofit2.http.Query
 import java.io.File
 import java.lang.Exception
 import java.util.*
+import android.os.Handler
+import android.view.View.VISIBLE
+
 
 interface TestStatAPI{
     @PUT("updateSelfAnswers")
@@ -40,12 +41,35 @@ interface TestStatAPI{
                     @Query("answers") array: String): Call<ResponseBody>
 }
 
-class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
+class TestFragment(val path: String, private val isFinal: Boolean = false) : Fragment(){
 
     //Для статистики
-    private lateinit var lesson: Lesson
+    private var timeInLesson: Long = 0
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    //Таймер
+    private var startTime: Long = 0
+    val timerHandler = Handler()
+    private val timerRunnable = object : Runnable {
+
+        override fun run() {
+            val millis = System.currentTimeMillis() - startTime
+            var seconds = ((60000*20-millis) / 1000).toInt()
+            val minutes = seconds / 60
+            seconds %= 60
+
+            if(timer != null) {
+                timer.text = String.format("%02d:%02d", minutes, seconds)
+            }
+
+            timerHandler.postDelayed(this, 500)
+        }
+    }
+
+    private lateinit var questionList: List<Question>
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View? {
+
         setHasOptionsMenu(true)
         return inflater.inflate(R.layout.test_fragment, container, false)
     }
@@ -53,26 +77,8 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        testToolbar.inflateMenu(R.menu.test)
-        testToolbar.setOnMenuItemClickListener {
-            when(it!!.itemId){
-                R.id.finish->{
-                    val testAdapter = viewPager.adapter as TestFragmentPagerAdapter
-                    val resultList = testAdapter.getGrades()
-                    publishStat(TestObject(lesson.name, resultList))
-                }
-                else->{
-                    super.onOptionsItemSelected(it)
-                }
-            }
-            true
-        }
-
-        //Для статистики
-        setLesson()
-
-        //Тут распарсить вопросики
-        val list = setTest()
+        setToolbar()
+        setTest()
 
         /*val s = """ [{"questionType":"SingleAnswerQuestion","questionData":{"questionBasic":{"questionID":1,"questionText":"SAQ"},"correctAnswer":"1","incorrectAnswers":["2","3"]}},{"questionType":"MultipleAnswerQuestion","questionData":{"questionBasic":{"questionID":2,"questionText":"MAQ"},"correctAnswers":["1","2"],"incorrectAnswers":["3","4"]}},{"questionType":"OneWordQuestion","questionData":{"questionBasic":{"questionID":3,"questionText":"Word"},"correctAnswer":"correct"}},{"questionType":"ChronologicalQuestion","questionData":{"questionBasic":{"questionID":4,"questionText":""},"correctOrder":["1","2","3"]}},{"questionType":"MatchQuestion","questionData":{"questionBasic":{"questionID":5,"questionText":""},"pairs":[{"first":"l1","second":"r1"},{"first":"l2","second":"r2"}],"incorrectAnswers":["e1","e2"]}}] """
         //Сюды класть вопросики
@@ -87,8 +93,38 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
                 else -> SingleAnswerQuestion(context!!, SingleAnswerQuestionBase("placeholder", 999, "asd", listOf("1", "2")))
             }
         }*/
+        if(isFinal){
+            setTimer()
+        }
+    }
 
-        viewPager.adapter = TestFragmentPagerAdapter(childFragmentManager, list, dots_layout, context!!)
+    private fun setToolbar(){
+        testToolbar.inflateMenu(R.menu.test)
+        testToolbar.setOnMenuItemClickListener {
+            when(it!!.itemId){
+                R.id.finish->{
+                    val testAdapter = viewPager.adapter as TestFragmentPagerAdapter
+                    val resultList = testAdapter.getGrades()
+                    if(isFinal) {
+                        putTestStat(TestObject(path, resultList),
+                            activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment)
+                        it.isVisible = false
+                    }
+                }
+                else->{
+                    super.onOptionsItemSelected(it)
+                }
+            }
+            true
+        }
+        testBack.setOnClickListener {
+            activity!!.onBackPressed()
+        }
+    }
+
+    private fun setTest(){
+        setQuestions()
+        viewPager.adapter = TestFragmentPagerAdapter(childFragmentManager, questionList, dots_layout, context!!)
         tabs.setupWithViewPager(viewPager)
         viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
 
@@ -112,18 +148,10 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
 
             }
         })
-
-        if(!isFinal){
-            timer.visibility = GONE
-        }
-
-        testBack.setOnClickListener {
-            activity!!.onBackPressed()
-        }
     }
 
     //С этим делай че хошь. Будет кайф, если будет выплевывать вопросики
-    private fun setTest(): List<Question> {
+    private fun setQuestions(){
         val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
 
         val directory = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).toString())
@@ -161,40 +189,37 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
             )
         }
 
-        return questions
+        questionList = questions
     }
 
-    //Для статистики
+    private fun setTimer(){
+        timer.visibility = VISIBLE
+        startTime = System.currentTimeMillis()
+        timerHandler.postDelayed(timerRunnable, 1000)
+    }
+
+    //Время
     override fun onResume() {
         super.onResume()
 
-        val currentTime = Calendar.getInstance().timeInMillis
-        lesson.time = currentTime
+        timeInLesson = Calendar.getInstance().timeInMillis
     }
 
-    //Для статистики
+    //Время
     override fun onPause() {
         super.onPause()
 
         val currentTime = Calendar.getInstance().timeInMillis
-        val timeInLesson = Lesson(path)
-        timeInLesson.time = currentTime-lesson.time
+        val lesson = Lesson(path)
+        lesson.time = currentTime - timeInLesson
         lesson.time = 0
         Thread().run {
-            publishStat(timeInLesson)
+            val profileFragment = activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment
+            profileFragment.addStat(lesson)
         }
     }
 
-    //Для статистики
-    private fun publishStat(stat: Statistic){
-        val profileFragment = activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment
-        profileFragment.addStat(stat)
-    }
-
-    private fun publishStat(stat: TestObject){
-        putTestStat(stat, activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment)
-    }
-
+    //Ответы
     private fun putTestStat(stat: TestObject, profileFragment: ProfileFragment){
 
         val retrofit = Retrofit.Builder()
@@ -220,9 +245,10 @@ class TestFragment(val path: String, val isFinal: Boolean = false) : Fragment(){
         })
     }
 
-    //Для статистики
-    private fun setLesson(){
-        val articleFragment = fragmentManager!!.findFragmentByTag("article") as ArticleFragment
-        lesson = Lesson(articleFragment.lesson.name, null)
+    override fun onDestroy() {
+        if(isFinal) {
+            timerHandler.removeCallbacks(timerRunnable)
+        }
+        super.onDestroy()
     }
 }

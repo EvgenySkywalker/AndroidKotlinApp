@@ -1,20 +1,21 @@
 package com.application.expertnewdesign.lesson.article
 
+import android.content.Context.AUDIO_SERVICE
 import android.content.pm.ActivityInfo
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.*
 import android.view.View.*
+import android.widget.LinearLayout
 import android.widget.RelativeLayout
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentPagerAdapter
 import androidx.viewpager.widget.ViewPager
 import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.lesson.test.TestFragment
 import com.application.expertnewdesign.lesson.test.question.QuestionMetadata
 import com.application.expertnewdesign.navigation.Lesson
-import com.application.expertnewdesign.navigation.NavigationLessonsFragment
 import com.application.expertnewdesign.navigation.Statistic
 import com.application.expertnewdesign.profile.ProfileFragment
 import com.github.barteksc.pdfviewer.util.FitPolicy
@@ -26,12 +27,16 @@ import java.io.File
 import java.lang.StringBuilder
 import java.util.*
 
-class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
+
+
+class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
 
     private var playlist: List<String>? = null
-    lateinit var lesson: Lesson
+    private var mediaPlayer: MediaPlayer? = null
+    private var audioManager: AudioManager? = null
+    private var timeInLesson: Long = 0
 
-    var done: Boolean = false
+    var hasHeight: Boolean = false
     var lastPage: Int = 0
     var height: Int? = null
 
@@ -43,10 +48,27 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setToolbar()
+        setPlaylist()
+        setPdf()
+        showTest()
+    }
 
+    private fun setToolbar(){
         articleToolbar.inflateMenu(R.menu.article)
+        articleBack.setOnClickListener {
+            activity!!.onBackPressed()
+        }
         articleToolbar.setOnMenuItemClickListener {
             when(it!!.itemId){
+                R.id.playAudio->{
+                    releaseMP()
+                    audioManager = activity!!.getSystemService(AUDIO_SERVICE) as AudioManager
+                    mediaPlayer = MediaPlayer()
+                    mediaPlayer!!.setDataSource("${activity!!.getExternalFilesDir(null)}/audio.mp3")
+                    mediaPlayer!!.prepare()
+                    mediaPlayer!!.start()
+                }
                 R.id.toTest->{
                     if(viewPager.adapter != null) {
                         val adapter = viewPager.adapter as VideoFragmentPagerAdapter
@@ -76,14 +98,17 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
                     viewPager.visibility = GONE
                     it.isVisible = false
                     articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
-                    progressBar.visibility = GONE
+                    playlistProgressBar.visibility = GONE
                 }
                 R.id.showVideo->{
                     viewPager.visibility = VISIBLE
+                    if(!hasHeight){
+                        viewPager.layoutParams.height = 0
+                    }
                     it.isVisible = false
                     articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
-                    if(progressBar.max > 1){
-                        progressBar.visibility = VISIBLE
+                    if(playlistProgressBar.max > 1){
+                        playlistProgressBar.visibility = VISIBLE
                     }
                 }
                 else->{
@@ -92,79 +117,76 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
             }
             true
         }
-        val dir = StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("article.pdf").toString()
-        pdfView.fromFile(File(dir)).spacing(0).pageFitPolicy(FitPolicy.WIDTH).load()
-        playlist = JsonHelper(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("videos.json").toString()).listVideo
+    }
+
+    private fun setPlaylist(){
+        playlist = JsonHelper(StringBuilder(context!!.getExternalFilesDir(null).toString())
+            .append(path).append("videos.json")
+            .toString())
+            .listVideo
         if(playlist != null) {
             if (playlist!!.isNotEmpty()) {
-                setPlaylist()
-            } else {
-                articleToolbar.menu.findItem(R.id.showVideo).isVisible = false
+                articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
+                playlistProgressBar.max = playlist!!.size
+                if (playlistProgressBar.max > 1) {
+                    playlistProgressBar.visibility = VISIBLE
+                }
+                viewPager.adapter = VideoFragmentPagerAdapter(playlist!!, childFragmentManager)
+                playlistProgressBar.progress = 1
+                tabs.setupWithViewPager(viewPager)
+                viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+                    override fun onPageSelected(position: Int) {
+                        playlistProgressBar.progress += (position - lastPage)
+                        lastPage = position
+                    }
+
+                    override fun onPageScrolled(position: Int, positionOffset: Float,
+                                                positionOffsetPixels: Int
+                    ) {}
+
+                    override fun onPageScrollStateChanged(state: Int) {}
+                })
             }
-        }else{
-            articleToolbar.menu.findItem(R.id.showVideo).isVisible = false
         }
+    }
+
+    private fun setPdf(){
+        val pdf = File("${context!!.getExternalFilesDir(null)}${path}article.pdf")
+        if(pdf.exists()){
+            pdfView.fromFile(pdf)
+                .spacing(0)
+                .pageFitPolicy(FitPolicy.WIDTH)
+                .load()
+        }else{
+            pdfView.visibility = GONE
+        }
+    }
+
+    private fun showTest(){
         val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
         if(file.exists()) {
             val meta = Json(JsonConfiguration.Stable).parse(
                 QuestionMetadata.serializer().list,
                 file.readText()
             )
-            if (meta.isEmpty()) {
-                articleToolbar.menu.findItem(R.id.toTest).isVisible = false
+            if (meta.isNotEmpty()) {
+                articleToolbar.menu.findItem(R.id.toTest).isVisible = true
             }
-        }else{
-            articleToolbar.menu.findItem(R.id.toTest).isVisible = false
-        }
-        setLesson()
-        articleBack.setOnClickListener {
-            activity!!.onBackPressed()
         }
     }
 
-    private fun setPlaylist(){
-            progressBar.max = playlist!!.size
-            if (progressBar.max <= 1) {
-                progressBar.visibility = GONE
-            }
-            getPagerAdapter()
-            tabs.setupWithViewPager(viewPager)
-            viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
-                override fun onPageSelected(position: Int) {
-                    progressBar.progress += (position - lastPage)
-                    lastPage = position
-                }
-
-                override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
-
-                }
-
-                override fun onPageScrollStateChanged(state: Int) {
-
-                }
-            })
-    }
-
-    private fun getPagerAdapter(){
-        viewPager.adapter = VideoFragmentPagerAdapter(playlist!!, childFragmentManager)
-        progressBar.progress = 1
-    }
-
-    override fun height(newHeight: Int) {
-        if(!done) {
-            height = newHeight
+    override fun height(_height: Int) {
+        if(!hasHeight) {
+            height = _height
             viewPager.layoutParams.height = height!!
-            val params = pdfView.layoutParams as RelativeLayout.LayoutParams
-            params.removeRule(RelativeLayout.BELOW)
-            params.addRule(RelativeLayout.BELOW, R.id.progressBar)
-            pdfView.layoutParams = params
         }
     }
 
     override fun fullScreen(isFullScreen: Boolean) {
         if(isFullScreen){
-            val params = viewPager.layoutParams as RelativeLayout.LayoutParams
-            params.removeRule(RelativeLayout.BELOW)
+            articleToolbar.visibility = GONE
+            pdfView.visibility = GONE
+            val params = viewPager.layoutParams as LinearLayout.LayoutParams
             params.height = ViewGroup.LayoutParams.MATCH_PARENT
             activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             activity!!.window.decorView.systemUiVisibility =
@@ -172,11 +194,12 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
                     .or(SYSTEM_UI_FLAG_FULLSCREEN
                         .or(SYSTEM_UI_FLAG_HIDE_NAVIGATION))
         }else{
+            articleToolbar.visibility = VISIBLE
+            pdfView.visibility = VISIBLE
             activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             activity!!.window.decorView.systemUiVisibility = SYSTEM_UI_FLAG_VISIBLE
             val params = viewPager.layoutParams as RelativeLayout.LayoutParams
             params.height = height!!
-            params.addRule(RelativeLayout.BELOW, R.id.articleToolbar)
             viewPager.layoutParams = params
         }
     }
@@ -189,21 +212,20 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
     override fun onResume() {
         super.onResume()
 
-        val currentTime = Calendar.getInstance().timeInMillis
-        lesson.time = currentTime
+        timeInLesson = Calendar.getInstance().timeInMillis
     }
 
     override fun onPause() {
         super.onPause()
 
-        if(lesson.time.compareTo(0) != 0) {
+        if(timeInLesson.compareTo(0) != 0) {
             val currentTime = Calendar.getInstance().timeInMillis
-            val timeInLesson = Lesson(path)
+            val lesson = Lesson(path)
 
-            timeInLesson.time = currentTime - lesson.time
-            lesson.time = 0
+            lesson.time = currentTime - timeInLesson
+            timeInLesson = 0
             Thread().run {
-                publishStat(timeInLesson)
+                publishStat(lesson)
             }
         }
     }
@@ -218,10 +240,21 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.Layout{
         }
     }
 
-    //Для статистики
-    private fun setLesson(){
-        val navigationFragment =
-            fragmentManager!!.findFragmentByTag("navigation") as NavigationLessonsFragment
-        lesson = Lesson(navigationFragment.currentLesson!!.name, null)
+    private fun releaseMP() {
+        if (mediaPlayer != null) {
+            try {
+                mediaPlayer!!.release()
+                mediaPlayer = null
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        releaseMP()
     }
 }

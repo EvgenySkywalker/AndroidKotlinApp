@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
+      <item android:id="@+id/playAudio"
+              android:icon="@drawable/ic_action_player"
+              app:showAsAction="ifRoom"
+              android:title="Подкаст" />
+
       <item android:id="@+id/hideVideo"
             android:icon="@drawable/ic_action_article_hide"
             app:showAsAction="ifRoom"
@@ -11,11 +16,13 @@
       <item android:id="@+id/showVideo"
             android:icon="@drawable/ic_action_article_show"
             app:showAsAction="ifRoom"
-            android:title="Показать видео" />
+            android:title="Показать видео"
+            android:visible="false"/>
 
       <item android:id="@+id/toTest"
             app:showAsAction="ifRoom"
             android:icon="@drawable/ic_action_test"
-            android:title="Открыть тест"/>
+            android:title="Открыть тест"
+            android:visible="false"/>
 
 </menu>
