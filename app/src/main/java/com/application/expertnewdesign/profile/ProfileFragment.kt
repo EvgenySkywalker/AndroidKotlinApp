@@ -37,8 +37,7 @@ interface UserInfoAPI{
 
 class ProfileFragment : Fragment(){
 
-    var synchronized = false
-    lateinit var token: String
+    private lateinit var token: String
 
     val user : User
         get() = getUserData()
@@ -59,18 +58,20 @@ class ProfileFragment : Fragment(){
         super.onViewCreated(view, savedInstanceState)
 
         token = activity!!.intent.getStringExtra("token")!!
-
         val activity = activity as MainActivity
         activity.profileFragment = this
 
+        loadUserInfo()
+        setLogout()
+    }
+
+    private fun setLogout(){
         button.setOnClickListener {
             val intent = Intent(activity, LoginActivity::class.java)
             intent.putExtra("relogin", true)
-            activity.startActivity(intent)
-            activity.finish()
+            activity!!.startActivity(intent)
+            activity!!.finish()
         }
-
-        loadUserInfo()
     }
 
     private fun getUserData(): User{
@@ -102,7 +103,6 @@ class ProfileFragment : Fragment(){
                 lessonStat.add(TimeObject(stat.name, stat.time))
             }
         }
-        //setUserData()
     }
 
     fun addStat(stat: TestObject) {
@@ -139,7 +139,7 @@ class ProfileFragment : Fragment(){
         lessonStat.clear()
     }
 
-    fun loadUserInfo(){
+    private fun loadUserInfo(){
         val gson = GsonBuilder()
             .setLenient()
             .create()
@@ -150,8 +150,7 @@ class ProfileFragment : Fragment(){
             .build()
 
         val userAPI = retrofit.create(UserInfoAPI::class.java)
-        val token = activity!!.intent.getStringExtra("token")!!
-        val call = userAPI.getUserInfo("Token $token").enqueue(object: Callback<User>{
+        userAPI.getUserInfo("Token $token").enqueue(object: Callback<User>{
             override fun onResponse(call: Call<User>, response: Response<User>) {
                 if(response.isSuccessful){
                     infinite_loading.visibility = GONE
@@ -162,7 +161,8 @@ class ProfileFragment : Fragment(){
                     lastName = user.lastName
                     rights = getRightsRU(user.rights!!)
                     setUserData()
-                    val chatFragment = activity!!.supportFragmentManager.findFragmentByTag("chat") as ChatFragment
+                    val chatFragment = activity!!.supportFragmentManager
+                        .findFragmentByTag("chat") as ChatFragment
                     when(name){
                         "admin"->{
                             chatFragment.username = "$firstName"
@@ -174,10 +174,7 @@ class ProfileFragment : Fragment(){
                 }else{
                     infinite_loading.visibility = GONE
                     loading_stat.text = "Не удалось загрузить данные"
-                    Toast.makeText(
-                        context!!, "Пользователь не найден",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(context!!, "Пользователь не найден", Toast.LENGTH_SHORT).show()
                 }
             }
 

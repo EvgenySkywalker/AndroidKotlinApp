@@ -8,8 +8,6 @@ class ChatMessage(var messageText: String? = null, var messageUser: String? = nu
     var messageTime: Long = 0
 
     init {
-
-        // Initialize to current time
         messageTime = Calendar.getInstance().timeInMillis
     }
 }

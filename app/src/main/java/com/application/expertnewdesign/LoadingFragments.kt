@@ -192,7 +192,7 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
                     if(horizontalProgress.progress > download!!.progress){
                         return
                     }
-                    horizontalProgress.progress = download!!.progress
+                    horizontalProgress.progress = download.progress
                 }
                 if (download!!.progress == 100) {
                     val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)

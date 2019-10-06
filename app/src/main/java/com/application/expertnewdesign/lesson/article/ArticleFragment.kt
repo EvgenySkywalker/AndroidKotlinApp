@@ -157,8 +157,20 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
                 .spacing(0)
                 .pageFitPolicy(FitPolicy.WIDTH)
                 .load()
-        }else{
-            pdfView.visibility = GONE
+        }else {
+            if (playlist != null) {
+                if (playlist!!.isNotEmpty()) {
+                    pdfView.visibility = GONE
+                    viewPager.visibility = VISIBLE
+                    if (!hasHeight) {
+                        viewPager.layoutParams.height = 0
+                    }
+                    articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
+                    if (playlistProgressBar.max > 1) {
+                        playlistProgressBar.visibility = VISIBLE
+                    }
+                }
+            }
         }
     }
 

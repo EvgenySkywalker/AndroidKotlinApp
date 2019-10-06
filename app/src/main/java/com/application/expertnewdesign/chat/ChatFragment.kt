@@ -6,6 +6,7 @@ import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -57,23 +58,16 @@ class ChatFragment: Fragment(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = CustomAdapter(context!!, messageList)
-        list_of_messages.layoutManager = LinearLayoutManager(context!!)
-        list_of_messages.adapter = adapter
-
         val activity = activity as MainActivity
         activity.chatFragment = this
 
-        if(mAuth!!.currentUser == null){
-            /*startActivityForResult(
-                AuthUI.getInstance()
-                    .createSignInIntentBuilder()
-                    .build(),
-                SIGN_IN_REQUEST_CODE
-            )*/
-        }
-        val currentUser = mAuth!!.currentUser
-        //updateUI(currentUser)
+        setChat()
+    }
+
+    private fun setChat(){
+        adapter = CustomAdapter(context!!, messageList)
+        list_of_messages.layoutManager = LinearLayoutManager(context!!)
+        list_of_messages.adapter = adapter
 
         fab.setOnClickListener {
             // Read the input field and push a new instance
@@ -91,8 +85,8 @@ class ChatFragment: Fragment(){
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         reference.removeEventListener(messageEvent)
+        super.onDestroy()
     }
 }
 
@@ -118,9 +112,9 @@ class CustomAdapter(context: Context, private val items: MutableList<ChatMessage
     }
 
     inner class ViewHolder internal constructor(view: View) : RecyclerView.ViewHolder(view) {
-        //val image = view.image
-        val title = view.message_user!!
-        val subtitle = view.message_time!!
-        val body = view.message_text!!
+
+        val title: TextView = view.message_user
+        val subtitle: TextView = view.message_time
+        val body: TextView = view.message_text
     }
 }

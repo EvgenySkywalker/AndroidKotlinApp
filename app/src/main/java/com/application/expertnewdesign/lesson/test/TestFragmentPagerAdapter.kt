@@ -17,7 +17,8 @@ import com.application.expertnewdesign.profile.QuestionObject
 class TestFragmentPagerAdapter(fm: FragmentManager,
                                private val questions: List<Question>,
                                private val dots: LinearLayout,
-                               private val context: Context) : FragmentPagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
+                               private val context: Context)
+    : FragmentPagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
 
     var dotsList: MutableList<ImageView> = arrayListOf()
     var lastPosition: Int = 0
