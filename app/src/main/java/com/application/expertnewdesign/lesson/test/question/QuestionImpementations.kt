@@ -22,6 +22,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.marginTop
 import androidx.core.view.setPadding
 import com.application.expertnewdesign.R
+import kotlinx.android.synthetic.main.multiple_answer_question_modified.view.*
 import kotlinx.android.synthetic.main.question.view.*
 import kotlinx.android.synthetic.main.question_ege.view.*
 import kotlinx.android.synthetic.main.question_fragment.view.*
@@ -127,11 +128,14 @@ class OneWordQuestionEGE(context: Context, questionBase: OneWordQuestionEGE_Base
         val correctAnswers = (questionBase as OneWordQuestionEGE_Base).correctAnswers
         val answer = answer.text.toString()
 
+        var isCorrect = false
         correctAnswers.forEach { ans ->
             if(ans.toLowerCase(Locale.ROOT) == answer.toLowerCase(Locale.ROOT)){
-                earnedPoints = questionBase.maxGrade
+                isCorrect = true
             }
         }
+
+        earnedPoints = if(isCorrect) questionBase.maxGrade else 0
     }
 }
 
@@ -285,17 +289,20 @@ class SingleAnswerQuestionModified(context: Context, questionBase: SingleAnswerQ
     override fun grade() {
         val correctAnswer = (questionBase as SingleAnswerQuestionBase).correctAnswer
 
+        var isCorrect = false
         radioButtons.forEach {
             if(it.isChecked && it.text.toString() == correctAnswer){
-                earnedPoints = questionBase.maxGrade
+                isCorrect = true
             }
         }
+
+        earnedPoints = if(isCorrect) questionBase.maxGrade else 0
     }
 
 }
 
 class MultipleAnswerQuestion(context: Context, questionBase: MultipleAnswerQuestionBase, image: File?)
-    : Question(context, R.layout.question, questionBase, image)
+    : Question(context, R.layout.multiple_answer_question_modified, questionBase, image)
 {
     private val checkBoxes = Array(questionBase.correctAnswers.size + questionBase.incorrectAnswers.size){CheckBox(context)}
 
@@ -307,7 +314,7 @@ class MultipleAnswerQuestion(context: Context, questionBase: MultipleAnswerQuest
 
         allOptions.forEachIndexed { index, s ->
             checkBoxes[index].text = s
-            addView(checkBoxes[index])
+            checkboxHolder.addView(checkBoxes[index])
         }
     }
 

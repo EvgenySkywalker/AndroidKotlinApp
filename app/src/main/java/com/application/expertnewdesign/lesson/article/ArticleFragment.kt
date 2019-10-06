@@ -18,6 +18,7 @@ import androidx.viewpager.widget.ViewPager
 import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.lesson.test.TestFragment
+import com.application.expertnewdesign.lesson.test.question.QuestionMetadata
 import com.application.expertnewdesign.navigation.Lesson
 import com.application.expertnewdesign.navigation.Statistic
 import com.application.expertnewdesign.profile.ProfileFragment
@@ -26,6 +27,9 @@ import kotlinx.android.synthetic.main.article_fragment.*
 import kotlinx.android.synthetic.main.article_fragment.tabs
 import kotlinx.android.synthetic.main.article_fragment.viewPager
 import kotlinx.android.synthetic.main.music_player.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.list
 import java.io.File
 import java.lang.StringBuilder
 import java.util.*
@@ -264,7 +268,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
 
     private fun showTest(){
         val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
-        /*if(file.exists()) {
+        if(file.exists()) {
             val meta = Json(JsonConfiguration.Stable).parse(
                 QuestionMetadata.serializer().list,
                 file.readText()
@@ -272,7 +276,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
             if (meta.isNotEmpty()) {
                 articleToolbar.menu.findItem(R.id.toTest).isVisible = true
             }
-        }*/
+        }
     }
 
     override fun height(_height: Int) {
