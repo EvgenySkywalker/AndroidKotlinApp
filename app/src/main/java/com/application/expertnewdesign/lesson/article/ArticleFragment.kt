@@ -153,22 +153,24 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
     private fun setPdf(){
         val pdf = File("${context!!.getExternalFilesDir(null)}${path}article.pdf")
         if(pdf.exists()){
-            pdfView.fromFile(pdf)
-                .spacing(0)
-                .pageFitPolicy(FitPolicy.WIDTH)
-                .load()
-        }else {
-            if (playlist != null) {
-                if (playlist!!.isNotEmpty()) {
-                    pdfView.visibility = GONE
-                    viewPager.visibility = VISIBLE
-                    if (!hasHeight) {
-                        viewPager.layoutParams.height = 0
-                    }
-                    articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
-                    if (playlistProgressBar.max > 1) {
-                        playlistProgressBar.visibility = VISIBLE
-                    }
+            if(pdf.length() > 0) {
+                pdfView.fromFile(pdf)
+                    .spacing(0)
+                    .pageFitPolicy(FitPolicy.WIDTH)
+                    .load()
+                return
+            }
+        }
+        pdfView.visibility = GONE
+        if (playlist != null) {
+            if (playlist!!.isNotEmpty()) {
+                viewPager.visibility = VISIBLE
+                if (!hasHeight) {
+                    viewPager.layoutParams.height = 0
+                }
+                articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
+                if (playlistProgressBar.max > 1) {
+                    playlistProgressBar.visibility = VISIBLE
                 }
             }
         }

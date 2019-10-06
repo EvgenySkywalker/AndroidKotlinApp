@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
-              android:layout_height="match_parent">
+              android:layout_height="match_parent"
+              android:background="@color/colorPrimary">
 
     <TableLayout
             android:layout_width="match_parent"
@@ -33,7 +34,7 @@
                     android:layout_height="wrap_content"
                     android:text="Получение информации..."
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"
+                    android:textColor="@color/colorTitle"
                     android:layout_gravity="center"/>
 
         </TableRow>
@@ -55,7 +56,7 @@
                     android:text="Логин: "
                     style="@style/TextAppearance.MaterialComponents.Subtitle2"
                     android:textSize="20sp"
-                    android:textColor="#202020"/>
+                    android:textColor="@color/colorLightBlack"/>
 
             <TextView android:id="@+id/nameView"
                     android:layout_width="wrap_content"
@@ -63,7 +64,7 @@
                     android:text="UNDEFINED"
                     style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"/>
+                    android:textColor="@color/colorTitle"/>
 
         </TableRow>
 
@@ -84,7 +85,7 @@
                     android:textSize="20sp"
                     android:text="Имя: "
                     style="@style/TextAppearance.MaterialComponents.Subtitle2"
-                    android:textColor="#202020"/>
+                    android:textColor="@color/colorLightBlack"/>
 
             <TextView android:id="@+id/firstNameView"
                     android:layout_width="wrap_content"
@@ -92,7 +93,7 @@
                     android:text="UNDEFINED"
                     style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"/>
+                    android:textColor="@color/colorTitle"/>
 
         </TableRow>
 
@@ -113,7 +114,7 @@
                     android:text="Фамилия: "
                     style="@style/TextAppearance.MaterialComponents.Subtitle2"
                     android:textSize="20sp"
-                    android:textColor="#202020"/>
+                    android:textColor="@color/colorLightBlack"/>
 
             <TextView android:id="@+id/lastNameView"
                     android:layout_width="wrap_content"
@@ -121,7 +122,7 @@
                     android:text="UNDEFINED"
                     style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"/>
+                    android:textColor="@color/colorTitle"/>
 
         </TableRow>
 
@@ -142,7 +143,7 @@
                     android:text="Доступ: "
                     style="@style/TextAppearance.MaterialComponents.Subtitle2"
                     android:textSize="20sp"
-                    android:textColor="#202020"/>
+                    android:textColor="@color/colorLightBlack"/>
 
             <TextView android:id="@+id/rightsView"
                     android:layout_width="wrap_content"
@@ -150,7 +151,7 @@
                     android:text="UNDEFINED"
                     style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"/>
+                    android:textColor="@color/colorTitle"/>
 
         </TableRow>
 
@@ -171,7 +172,7 @@
                     android:text="В уроках: "
                     style="@style/TextAppearance.MaterialComponents.Subtitle2"
                     android:textSize="20sp"
-                    android:textColor="#202020"/>
+                    android:textColor="@color/colorLightBlack"/>
 
             <TextView android:id="@+id/time"
                     android:layout_width="wrap_content"
@@ -179,7 +180,7 @@
                     android:text="UNDEFINED"
                     style="@style/TextAppearance.MaterialComponents.Headline1"
                     android:textSize="20sp"
-                    android:textColor="#E0E0E0"/>
+                    android:textColor="@color/colorTitle"/>
 
         </TableRow>
 
@@ -188,12 +189,12 @@
     <Button
             android:text="Выход"
             android:textSize="20sp"
-            android:textColor="#E0E0E0"
+            android:textColor="@color/colorTitle"
             style="@style/TextAppearance.MaterialComponents.Overline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:id="@+id/button"
-            android:background="#737373"/>
+            android:background="@color/colorPrimary"/>
 
 </RelativeLayout>

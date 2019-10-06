@@ -5,7 +5,7 @@
         android:layout_width="wrap_content">
     <item>
         <shape>
-            <solid android:color="#707070"/>
+            <solid android:color="@color/colorItem"/>
             <corners android:bottomRightRadius="20dip"
                     android:bottomLeftRadius="0.1dp"
                     android:topLeftRadius="20dip"

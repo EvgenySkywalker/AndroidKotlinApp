@@ -3,14 +3,15 @@
                 xmlns:tools="http://schemas.android.com/tools"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimary">
 
         <androidx.appcompat.widget.Toolbar
                 android:id="@+id/articleToolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:theme="@style/Widget.AppCompat.Toolbar"
-                android:background="#434343">
+                android:background="@color/colorAccent">
 
                 <RelativeLayout android:layout_width="match_parent"
                                 android:layout_height="wrap_content">
@@ -50,9 +51,8 @@
                 android:id="@+id/playlistProgressBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#000000"
                 android:theme="@style/Widget.AppCompat.ProgressBar.Horizontal"
-                android:visibility="visible"/>
+                android:visibility="gone"/>
 
         <com.github.barteksc.pdfviewer.PDFView
                 android:id="@+id/pdfView"

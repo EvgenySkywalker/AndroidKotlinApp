@@ -28,7 +28,7 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val notificationIntent = Intent(this, NotificationService::class.java)
+        //val notificationIntent = Intent(this, NotificationService::class.java)
         //startService(notificationIntent)
         //stopService(notificationIntent)
 
@@ -61,7 +61,6 @@ class LoginActivity : AppCompatActivity() {
         loginViewModel.loginResult.observe(this@LoginActivity, Observer {
             val loginResult = it ?: return@Observer
 
-            loading.visibility = View.GONE
             val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             imm.hideSoftInputFromWindow(container.windowToken, 0)
             if (loginResult.error != null) {
@@ -96,7 +95,6 @@ class LoginActivity : AppCompatActivity() {
             }
 
             login.setOnClickListener {
-                loading.visibility = View.VISIBLE
                 loginViewModel.login(username.text.toString(), password.text.toString())
             }
         }

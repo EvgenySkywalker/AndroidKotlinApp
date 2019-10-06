@@ -69,6 +69,10 @@ class ProfileFragment : Fragment(){
         button.setOnClickListener {
             val intent = Intent(activity, LoginActivity::class.java)
             intent.putExtra("relogin", true)
+            Thread().run{
+                val file = File("${activity!!.filesDir.path}/token.txt")
+                file.delete()
+            }
             activity!!.startActivity(intent)
             activity!!.finish()
         }

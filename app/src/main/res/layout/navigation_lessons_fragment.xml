@@ -3,21 +3,20 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#EAEAEA">
+        android:layout_height="match_parent">
 
     <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:theme="@style/Widget.AppCompat.Toolbar">
+            android:theme="@style/Widget.AppCompat.Toolbar"
+            android:elevation="4dp">
 
         <androidx.appcompat.widget.Toolbar
                 android:id="@+id/navigationToolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
-                android:background="#434343"
-                android:elevation="2dp"
+                android:background="@color/colorAccent"
                 android:minHeight="56dp">
 
             <androidx.appcompat.widget.AppCompatImageButton
@@ -34,7 +33,7 @@
                                                app:layoutManager="LinearLayoutManager"
                                                android:layout_width="match_parent"
                                                android:layout_height="match_parent"
-                                               android:background="#737373"
+                                               android:background="@color/colorPrimary"
                                                app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

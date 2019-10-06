@@ -70,15 +70,16 @@ class ChatFragment: Fragment(){
         list_of_messages.adapter = adapter
 
         fab.setOnClickListener {
-            // Read the input field and push a new instance
-            // of ChatMessage to the Firebase database
-            reference
-                .push()
-                .setValue(ChatMessage(input.text.toString(), username))
+            val str = input.text.toString()
+            if(str != "" && str.length > 3) {
+                reference
+                    .push()
+                    .setValue(ChatMessage(str, username))
 
-            // Clear the input
-            input.setText("")
-            list_of_messages.scrollToPosition(messageList.size - 1)
+                // Clear the input
+                input.setText("")
+                list_of_messages.scrollToPosition(messageList.size - 1)
+            }
         }
 
         reference.addValueEventListener(messageEvent)
