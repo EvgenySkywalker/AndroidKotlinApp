@@ -1,5 +1,6 @@
 package com.application.expertnewdesign.lesson.test
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -30,6 +31,7 @@ import java.lang.Exception
 import java.util.*
 import android.os.Handler
 import android.view.View.VISIBLE
+import android.view.inputmethod.InputMethodManager
 
 
 interface TestStatAPI{
@@ -138,6 +140,8 @@ class TestFragment(val path: String, private val isFinal: Boolean = false) : Fra
                 testAdapter.lastPosition = position
                 testAdapter.lastState = testAdapter.dotsList[position].drawable
                 testAdapter.dotsList[position].setImageResource(R.drawable.ic_dot_selected)
+                val imm = activity!!.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(container.windowToken, 0)
             }
 
             override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {

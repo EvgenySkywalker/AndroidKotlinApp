@@ -229,9 +229,9 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
                     if(loading_stat != null)
                         loading_stat.text =
                             String.format(
-                                "Загружено (%d/%d) KB",
-                                download.currentFileSize,
-                                download.totalFileSize
+                                "Загружено %d из %d MB",
+                                download.currentFileSize/1000,
+                                download.totalFileSize/1000
                             )
                 }
             }else{

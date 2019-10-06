@@ -5,7 +5,8 @@
       <item android:id="@+id/playAudio"
               android:icon="@drawable/ic_action_player"
               app:showAsAction="ifRoom"
-              android:title="Подкаст" />
+              android:title="Подкаст"
+              android:visible="false"/>
 
       <item android:id="@+id/hideVideo"
             android:icon="@drawable/ic_action_article_hide"
