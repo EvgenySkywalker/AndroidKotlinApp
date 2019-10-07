@@ -32,4 +32,5 @@ data class QuestionObject(
     @SerializedName("questionID")
     val questionID: Int,
     @SerializedName("status")
-    val status: Int)
+    val status: Int,
+    val max: Int)

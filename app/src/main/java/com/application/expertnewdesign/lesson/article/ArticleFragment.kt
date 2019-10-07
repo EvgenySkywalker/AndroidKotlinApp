@@ -48,22 +48,27 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
 
         override fun run() {
 
-            if(mediaPlayer!!.isPlaying) {
-
                 val millis = mediaPlayer!!.currentPosition
                 val allSeconds = millis/1000
                 val minutes = allSeconds/60
                 val seconds = allSeconds%60
+                val _duration = duration/1000
 
                 if (currentPosition != null) {
-                    progress.progress = ((allSeconds.toFloat()/duration.toFloat())*100).toInt()
-                    currentPosition.text = String.format(
-                        "%d:%02d / %d:%02d", minutes, seconds, duration/60, duration%60)
+                    if(duration - millis > 200){
+                        progress.progress = ((millis.toFloat()/duration.toFloat())*100).toInt()
+                        currentPosition.text = String.format(
+                            "%d:%02d / %d:%02d", minutes, seconds, _duration/60, _duration%60)
+                    }else{
+                        musicPause.visibility = GONE
+                        musicPlay.visibility = VISIBLE
+                        currentPosition.text = String.format(
+                            "%d:%02d / %d:%02d", _duration/60, _duration%60, _duration/60, _duration%60)
+                        progress.progress = 100
+                    }
                 }
 
-            }
-
-            timerHandler.postDelayed(this, 500)
+            timerHandler.postDelayed(this, 200)
         }
     }
 
@@ -104,7 +109,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
                         mediaPlayer!!.prepare()
                         mediaPlayer!!.start()
                         musicPlayer.visibility = VISIBLE
-                        duration = mediaPlayer!!.duration/1000
+                        duration = mediaPlayer!!.duration
                         timerHandler.post(timerRunnable)
                     }else {
                         if(musicPlayer.visibility == GONE){
@@ -190,9 +195,9 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
 
         musicBackward.setOnClickListener {
             val currentTime = Calendar.getInstance().timeInMillis
-            if(currentTime - lastSeekTime > 500) {
+            if (currentTime - lastSeekTime > 500) {
                 mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition - 5000)
-            }else{
+            } else {
                 mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition - 12000)
             }
             lastSeekTime = currentTime
@@ -200,9 +205,9 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
 
         musicForward.setOnClickListener {
             val currentTime = Calendar.getInstance().timeInMillis
-            if(currentTime - lastSeekTime > 500) {
+            if (currentTime - lastSeekTime > 500) {
                 mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition + 5000)
-            }else{
+            } else {
                 mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition + 12000)
             }
             lastSeekTime = currentTime

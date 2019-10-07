@@ -1,6 +1,9 @@
 package com.application.expertnewdesign.lesson.test
 
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
+import android.content.res.Resources
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -30,8 +33,11 @@ import java.io.File
 import java.lang.Exception
 import java.util.*
 import android.os.Handler
+import android.view.Gravity
+import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.inputmethod.InputMethodManager
+import android.widget.LinearLayout
 
 
 interface TestStatAPI{
@@ -102,19 +108,20 @@ class TestFragment(val path: String, private val isFinal: Boolean = false) : Fra
 
     private fun setToolbar(){
         testToolbar.inflateMenu(R.menu.test)
-        testToolbar.setOnMenuItemClickListener {
-            when(it!!.itemId){
+        testToolbar.setOnMenuItemClickListener { menuItem ->
+            when(menuItem!!.itemId){
                 R.id.finish->{
                     val testAdapter = viewPager.adapter as TestFragmentPagerAdapter
                     val resultList = testAdapter.getGrades()
                     if(isFinal) {
                         putTestStat(TestObject(path, resultList),
                             activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment)
-                        it.isVisible = false
+                        menuItem.isVisible = false
                     }
+                    showResult(resultList)
                 }
                 else->{
-                    super.onOptionsItemSelected(it)
+                    super.onOptionsItemSelected(menuItem)
                 }
             }
             true
@@ -152,6 +159,31 @@ class TestFragment(val path: String, private val isFinal: Boolean = false) : Fra
 
             }
         })
+    }
+
+    private fun showResult(questions: List<QuestionObject>){
+        var earned = 0
+        var max = 0
+        questions.forEach {
+            earned += it.status
+            max += it.max
+        }
+        val builder = AlertDialog.Builder(context)
+        builder.setTitle("Результат:")
+            .setMessage("Вы набрали $earned из $max возможных")
+            .setCancelable(false)
+            .setNeutralButton("Ок") { dialog, _ ->
+                dialog.cancel()
+            }
+        val alert = builder.create()
+        alert.show()
+        val neutralButton = alert.getButton(AlertDialog.BUTTON_NEUTRAL)
+        neutralButton.setBackgroundResource(R.drawable.button_bckgrnd)
+        val parent = neutralButton.parent as LinearLayout
+        parent.gravity = Gravity.CENTER_HORIZONTAL
+        parent.setPadding(0, 0, 0, 20)
+        val leftSpacer = parent.getChildAt(1)
+        leftSpacer.visibility = GONE
     }
 
     //С этим делай че хошь. Будет кайф, если будет выплевывать вопросики

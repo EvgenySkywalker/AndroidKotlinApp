@@ -229,7 +229,7 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
                     if(loading_stat != null)
                         loading_stat.text =
                             String.format(
-                                "Загружено %d из %d MB",
+                                "Загружено %d из %d МБ",
                                 download.currentFileSize/1000,
                                 download.totalFileSize/1000
                             )
@@ -272,7 +272,7 @@ class DownloadService : IntentService("Download Service") {
         initDownload()
     }
 
-    fun initDownload(){
+    private fun initDownload(){
 
         val innerClient = OkHttpClient.Builder()
             .connectTimeout(0, TimeUnit.MINUTES)

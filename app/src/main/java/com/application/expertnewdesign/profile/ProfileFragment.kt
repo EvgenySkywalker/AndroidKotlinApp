@@ -1,7 +1,6 @@
 package com.application.expertnewdesign.profile
 
 import android.content.Intent
-import android.os.AsyncTask
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,7 +10,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.application.expertnewdesign.BASE_URL
-import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.MainActivity
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.authorization.ui.login.LoginActivity
@@ -19,7 +17,6 @@ import com.application.expertnewdesign.chat.ChatFragment
 import com.application.expertnewdesign.navigation.Lesson
 import com.application.expertnewdesign.navigation.Statistic
 import com.google.gson.GsonBuilder
-import kotlinx.android.synthetic.main.activity_login.*
 import kotlinx.android.synthetic.main.profile_fragment.*
 import retrofit2.Call
 import retrofit2.Callback
@@ -47,8 +44,8 @@ class ProfileFragment : Fragment(){
     private var lastName: String? = null
     private var rights: String? = null
 
-    private var lessonStat: MutableList<TimeObject> = arrayListOf()
-    private var testStat: MutableList<TestObject> = arrayListOf()
+    private var lessonUploadStat: MutableList<TimeObject> = arrayListOf()
+    private var testUploadStat: MutableList<TestObject> = arrayListOf()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.profile_fragment, container, false)
@@ -81,7 +78,7 @@ class ProfileFragment : Fragment(){
     private fun getUserData(): User{
         val user = User()
         val lessonList: MutableList<TimeObject> = arrayListOf()
-        lessonStat.forEach {
+        lessonUploadStat.forEach {
             var has = false
             if(lessonList.isNotEmpty()) {
                 for (element in lessonList) {
@@ -97,20 +94,20 @@ class ProfileFragment : Fragment(){
             }
         }
         user.lessonsStat = lessonList
-        user.testsStat = testStat
+        user.testsStat = testUploadStat
         return user
     }
 
     fun addStat(stat: Statistic) {
         when(stat){
             is Lesson->{
-                lessonStat.add(TimeObject(stat.name, stat.time))
+                lessonUploadStat.add(TimeObject(stat.name, stat.time))
             }
         }
     }
 
     fun addStat(stat: TestObject) {
-        testStat.add(stat)
+        testUploadStat.add(stat)
     }
 
     private fun setUserData(){
@@ -131,16 +128,16 @@ class ProfileFragment : Fragment(){
             profileLastName.visibility = VISIBLE
             rightsView.text = rights
             profileRights.visibility = VISIBLE
-            time.text = getStr(lessonStat)
+            time.text = getStr(lessonUploadStat)
             profileLessons.visibility = VISIBLE
     }
 
     fun clearTests(){
-        testStat.clear()
+        testUploadStat.clear()
     }
 
     fun clearLessons(){
-        lessonStat.clear()
+        lessonUploadStat.clear()
     }
 
     private fun loadUserInfo(){

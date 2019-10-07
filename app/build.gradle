@@ -6,21 +6,21 @@ apply plugin: 'kotlin-android-extensions'
 
 
 android {
-    /*signingConfigs {
+    signingConfigs {
         debug {
             storeFile file('C:\\Users\\evg26\\key_storage.jks')
             storePassword '0145000'
             keyAlias = 'expert'
             keyPassword 'expertege'
         }
-    }*/
+    }
     compileSdkVersion 29
     buildToolsVersion "29.0.0"
     defaultConfig {
         applicationId "com.application.expertnewdesign"
         minSdkVersion 19
         targetSdkVersion 29
-        versionCode 15
+        versionCode 17
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true

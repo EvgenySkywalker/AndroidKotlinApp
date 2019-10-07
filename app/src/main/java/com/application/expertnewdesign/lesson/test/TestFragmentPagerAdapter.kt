@@ -72,7 +72,7 @@ class TestFragmentPagerAdapter(fm: FragmentManager,
             if(index == lastPosition){
                 lastState = dotsList[index].drawable
             }
-            grades.add(QuestionObject(element.questionBase.questionID, grade))
+            grades.add(QuestionObject(element.questionBase.questionID, grade, element.questionBase.maxGrade))
         }
         return grades
     }
