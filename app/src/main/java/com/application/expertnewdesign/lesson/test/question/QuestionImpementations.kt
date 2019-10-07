@@ -62,6 +62,20 @@ class Filters{
 
 }
 
+
+fun getEnding(length : Int) : String{
+    return if(length in 10..19){
+        "ел"
+    } else {
+        when(length % 10){
+            1 -> "ло"
+            2, 3, 4 -> "ла"
+            0, 5, 6, 7, 8, 9 -> "ел"
+            else -> ""
+        }
+    }
+}
+
 abstract class MyLayout(context: Context, inflattable : Int) : LinearLayout(context){
     init {
         orientation = VERTICAL
@@ -108,10 +122,15 @@ abstract class Question(context: Context, inflattable: Int, val questionBase: Qu
 }
 
 abstract class QuestionEGE(context: Context, questionBase: QuestionBase, image: File?)
-    : Question(context, R.layout.question_ege, questionBase, image)
+    : Question(context, R.layout.question, questionBase, image)
 {
+    val answer = EditText(context)
+
     init {
+        answer.layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        answer.hint = "Введите ответ"
         initInputType()
+        answerHolder.addView(answer)
     }
 
     abstract fun initInputType()
@@ -143,9 +162,11 @@ class MultipleAnswerQuestionEGE(context: Context, questionBase: MultipleAnswerQu
     : QuestionEGE(context, questionBase, image)
 {
     override fun initInputType() {
-        answer.inputType = InputType.TYPE_CLASS_NUMBER
-
         val correctAnswer = (questionBase as MultipleAnswerQuestionEGE_Base).correctAnswer
+
+        answer.inputType = InputType.TYPE_CLASS_NUMBER
+        answer.hint = "Введите ${correctAnswer.length} чис${getEnding(correctAnswer.length)}"
+
         answer.filters = arrayOf(Filters.UniqueFilter, InputFilter.LengthFilter(correctAnswer.length))
     }
 
@@ -174,7 +195,9 @@ class SequenceQuestionEGE(context: Context, questionBase: SequenceQuestionEGE_Ba
         answer.inputType = InputType.TYPE_CLASS_NUMBER
 
         val correctAnswer = (questionBase as SequenceQuestionEGE_Base).correctAnswer
-        
+
+        answer.hint = "Введите ${correctAnswer.length} чис${getEnding(correctAnswer.length)}"
+
         val filter = InputFilter { source, _, _, dest, _, _ ->
             var resultString = ""
             source.forEach {
@@ -203,8 +226,11 @@ class MatchQuestionEGE(context: Context, questionBase: MatchQuestionEGE_Base, im
     override fun initInputType() {
         answer.inputType = InputType.TYPE_CLASS_NUMBER
 
-        questionBase as MatchQuestionEGE_Base
-        answer.filters = arrayOf(InputFilter.LengthFilter(questionBase.correctAnswer.length))
+        val correctAnswer = (questionBase as MatchQuestionEGE_Base).correctAnswer
+
+        answer.hint = "Введите ${correctAnswer.length} чис${getEnding(correctAnswer.length)}"
+
+        answer.filters = arrayOf(InputFilter.LengthFilter(correctAnswer.length))
     }
 
     override fun grade() {
@@ -227,6 +253,7 @@ class PairMatchQuestionEGE(context: Context, questionBase: PairMatchQuestionEGE_
 {
     override fun initInputType() {
         answer.inputType = InputType.TYPE_CLASS_NUMBER
+        answer.hint = "Введите 4 числа"
 
         val filter = InputFilter { source, _, _, dest, _, _ ->
             var resultString = ""
@@ -268,7 +295,7 @@ abstract class QuestionModified(){
 }
 
 class SingleAnswerQuestionModified(context: Context, questionBase: SingleAnswerQuestionBase, image: File?)
-    : Question(context, R.layout.single_answer_question_modified, questionBase, image)
+    : Question(context, R.layout.question, questionBase, image)
 {
 
     val radioButtons = Array(questionBase.incorrectAnswers.size + 1){RadioButton(context)}
@@ -279,10 +306,14 @@ class SingleAnswerQuestionModified(context: Context, questionBase: SingleAnswerQ
         allOptions.addAll(questionBase.incorrectAnswers)
         allOptions.shuffle()
 
+        val radioGroup = RadioGroup(context)
+
         allOptions.forEachIndexed { index, value ->
             radioButtons[index].text = value
             radioGroup.addView(radioButtons[index])
         }
+
+        answerHolder.addView(radioGroup)
     }
 
 
@@ -302,7 +333,7 @@ class SingleAnswerQuestionModified(context: Context, questionBase: SingleAnswerQ
 }
 
 class MultipleAnswerQuestion(context: Context, questionBase: MultipleAnswerQuestionBase, image: File?)
-    : Question(context, R.layout.multiple_answer_question_modified, questionBase, image)
+    : Question(context, R.layout.question, questionBase, image)
 {
     private val checkBoxes = Array(questionBase.correctAnswers.size + questionBase.incorrectAnswers.size){CheckBox(context)}
 
@@ -314,7 +345,7 @@ class MultipleAnswerQuestion(context: Context, questionBase: MultipleAnswerQuest
 
         allOptions.forEachIndexed { index, s ->
             checkBoxes[index].text = s
-            checkboxHolder.addView(checkBoxes[index])
+            answerHolder.addView(checkBoxes[index])
         }
     }
 
