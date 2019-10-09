@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.application.expertnewdesign.BASE_URL
+import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.MainActivity
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.authorization.ui.login.LoginActivity
@@ -26,10 +27,16 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Header
 import java.io.File
+import java.sql.Time
 
 interface UserInfoAPI{
     @GET("getSelfInfo")
     fun getUserInfo(@Header("Authorization") token: String): Call<User>
+}
+
+interface UserStatAPI{
+    @GET("getSelfUserStats")
+    fun getUserStat(@Header("Authorization") token: String): Call<List<TimeObject>>
 }
 
 class ProfileFragment : Fragment(){
@@ -44,8 +51,7 @@ class ProfileFragment : Fragment(){
     private var lastName: String? = null
     private var rights: String? = null
 
-    private var lessonUploadStat: MutableList<TimeObject> = arrayListOf()
-    private var testUploadStat: MutableList<TestObject> = arrayListOf()
+    private var lessonStat: MutableList<TimeObject> = emptyList<TimeObject>().toMutableList()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.profile_fragment, container, false)
@@ -58,7 +64,7 @@ class ProfileFragment : Fragment(){
         val activity = activity as MainActivity
         activity.profileFragment = this
 
-        loadUserInfo()
+        loadUser()
         setLogout()
     }
 
@@ -77,70 +83,44 @@ class ProfileFragment : Fragment(){
 
     private fun getUserData(): User{
         val user = User()
-        val lessonList: MutableList<TimeObject> = arrayListOf()
-        lessonUploadStat.forEach {
-            var has = false
-            if(lessonList.isNotEmpty()) {
-                for (element in lessonList) {
-                    if (it.lesson == element.lesson) {
-                        element.time += it.time
-                        has = true
-                        break
+        if(name != null) {
+            user.name = name
+            user.firstName = firstName
+            user.lastName = lastName
+            user.rights = rights
+        }
+        val lessonList: MutableList<TimeObject> = emptyList<TimeObject>().toMutableList()
+        if(lessonStat.isNotEmpty()) {
+            lessonStat.forEach {
+                var has = false
+                if (lessonList.isNotEmpty()) {
+                    for (element in lessonList) {
+                        if (it.lesson == element.lesson) {
+                            element.time += it.time
+                            has = true
+                            break
+                        }
                     }
                 }
-            }
-            if(!has){
-                lessonList.add(it)
+                if (!has) {
+                    lessonList.add(it)
+                }
             }
         }
         user.lessonsStat = lessonList
-        user.testsStat = testUploadStat
         return user
     }
 
     fun addStat(stat: Statistic) {
         when(stat){
             is Lesson->{
-                lessonUploadStat.add(TimeObject(stat.name, stat.time))
+                lessonStat.add(TimeObject(stat.name, stat.time))
             }
         }
+        setUserData()
     }
 
-    fun addStat(stat: TestObject) {
-        testUploadStat.add(stat)
-    }
-
-    private fun setUserData(){
-        fun getStr(lessonsStat: List<TimeObject>): String{
-            var lessonTime: Long = 0
-            lessonsStat.forEach {
-                lessonTime += it.time
-            }
-            lessonTime /= 1000
-            val min = lessonTime / 60
-            return "$min минут(ы)"
-        }
-
-            nameView.text = name
-            firstNameView.text = firstName
-            profileFirstName.visibility = VISIBLE
-            lastNameView.text = lastName
-            profileLastName.visibility = VISIBLE
-            rightsView.text = rights
-            profileRights.visibility = VISIBLE
-            time.text = getStr(lessonUploadStat)
-            profileLessons.visibility = VISIBLE
-    }
-
-    fun clearTests(){
-        testUploadStat.clear()
-    }
-
-    fun clearLessons(){
-        lessonUploadStat.clear()
-    }
-
-    private fun loadUserInfo(){
+    private fun getUserInfo(){
         val gson = GsonBuilder()
             .setLenient()
             .create()
@@ -154,59 +134,143 @@ class ProfileFragment : Fragment(){
         userAPI.getUserInfo("Token $token").enqueue(object: Callback<User>{
             override fun onResponse(call: Call<User>, response: Response<User>) {
                 if(response.isSuccessful){
-                    infinite_loading.visibility = GONE
-                    loading_stat.visibility = GONE
-                    val user = response.body()
-                    name = user.name
-                    firstName = user.firstName
-                    lastName = user.lastName
-                    rights = getRightsRU(user.rights!!)
-                    setUserData()
-                    val chatFragment = activity!!.supportFragmentManager
-                        .findFragmentByTag("chat") as ChatFragment
-                    when(name){
-                        "admin"->{
-                            chatFragment.username = "$firstName"
+                    Thread().run{
+                        infinite_loading.visibility = GONE
+                        loading_stat.visibility = GONE
+                        val user = response.body()
+                        if(user.name != null) {
+                            name = user.name!!
+                            firstName = user.firstName
+                            lastName = user.lastName
+                            rights = getRightsRU(user.rights!!)
+                            val chatFragment = activity!!.supportFragmentManager
+                                .findFragmentByTag("chat") as ChatFragment
+                            when (name) {
+                                "admin" -> {
+                                    chatFragment.username = "$firstName"
+                                }
+                                else -> {
+                                    chatFragment.username = "$firstName($name)"
+                                }
+                            }
+                            activity!!.runOnUiThread {
+                                setUserData()
+                            }
                         }
-                        else->{
-                            chatFragment.username = "$firstName($name)"
-                        }
+                        getLocal()
                     }
                 }else{
                     infinite_loading.visibility = GONE
                     loading_stat.text = "Не удалось загрузить данные"
                     Toast.makeText(context!!, "Пользователь не найден", Toast.LENGTH_SHORT).show()
+                    getLocal()
                 }
             }
 
             override fun onFailure(call: Call<User>, t: Throwable) {
                 infinite_loading.visibility = GONE
                 loading_stat.text = "Не удалось загрузить данные"
-                Toast.makeText(
-                    context!!, "Сервер не отвечает",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(context!!, "Сервер не отвечает", Toast.LENGTH_SHORT).show()
+                getLocal()
             }
+        })
+    }
 
-            fun getRightsRU(value: String): String{
-                when(value){
-                    "admin"->{
-                        return "Администратор"
-                    }
-                    "teacher"->{
-                        return "Преподаватель"
-                    }
-                    "student"->{
-                        return "Обучающийся"
-                    }
-                    "guest"->{
-                        return "Ученик"
-                    }
-                    else->{
-                        return "Неизвестно"
+    private fun getUserStat(){
+        val gson = GsonBuilder()
+            .setLenient()
+            .create()
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+
+        val userAPI = retrofit.create(UserStatAPI::class.java)
+        userAPI.getUserStat("Token $token").enqueue(object: Callback<List<TimeObject>>{
+            override fun onResponse(call: Call<List<TimeObject>>, response: Response<List<TimeObject>>) {
+                if(response.isSuccessful){
+                    Thread().run {
+                        val timeStat = response.body()
+                        if(timeStat.isNotEmpty()) {
+                            lessonStat.addAll(timeStat)
+                            activity!!.runOnUiThread {
+                                setUserData()
+                            }
+                        }
                     }
                 }
             }
+
+            override fun onFailure(call: Call<List<TimeObject>>?, t: Throwable?) {
+
+            }
         })
+    }
+
+    private fun setUserData(){
+        fun getStr(lessonsStat: List<TimeObject>): String{
+            var lessonTime: Long = 0
+            lessonsStat.forEach {
+                lessonTime += it.time
+            }
+            lessonTime /= 1000
+            val min = lessonTime / 60
+            return "$min минут(ы)"
+        }
+            nameView.text = name
+            firstNameView.text = firstName
+            profileFirstName.visibility = VISIBLE
+            lastNameView.text = lastName
+            profileLastName.visibility = VISIBLE
+            rightsView.text = rights
+            profileRights.visibility = VISIBLE
+            time.text = getStr(lessonStat)
+            profileLessons.visibility = VISIBLE
+    }
+
+
+    private fun loadUser(){
+        getUserInfo()
+        getUserStat()
+    }
+
+    fun getLocal(){
+        val userLocal = File("${activity!!.filesDir.path}/user.json")
+        if(userLocal.exists()) {
+            val json = JsonHelper("${activity!!.filesDir.path}/user.json")
+            val user = json.user
+            if(user.name != null && (name == null || user.name == name)) {
+                name = user.name!!
+                firstName = user.firstName!!
+                lastName = user.lastName
+                rights = getRightsRU(user.rights!!)
+                lessonStat.addAll(user.lessonsStat)
+                activity!!.runOnUiThread {
+                    setUserData()
+                }
+            }
+            userLocal.delete()
+        }
+    }
+
+    fun getRightsRU(value: String): String{
+        when(value){
+            "admin"->{
+                return "Администратор"
+            }
+            "teacher"->{
+                return "Преподаватель"
+            }
+            "student"->{
+                return "Обучающийся"
+            }
+            "guest"->{
+                return "Ученик"
+            }
+            else->{
+                return value
+            }
+        }
     }
 }

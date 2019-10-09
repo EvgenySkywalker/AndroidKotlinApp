@@ -44,14 +44,14 @@
         <androidx.viewpager.widget.ViewPager
                 android:id="@+id/viewPager"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"/>
+                android:layout_height="wrap_content" />
 
         <androidx.core.widget.ContentLoadingProgressBar
                 android:id="@+id/playlistProgressBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:theme="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:background="@color/colorLightBlack"
                 android:visibility="gone"/>
 
         <com.github.barteksc.pdfviewer.PDFView

@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -14,12 +13,12 @@ import com.application.expertnewdesign.lesson.article.ArticleFragment
 import com.application.expertnewdesign.navigation.NavigationLessonsFragment
 import com.application.expertnewdesign.profile.ProfileFragment
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.navigation_lessons_fragment.*
-import kotlinx.android.synthetic.main.video_fragment.*
 import android.view.inputmethod.InputMethodManager
 import com.application.expertnewdesign.chat.ChatFragment
+import com.application.expertnewdesign.lesson.test.TestFragment
 import com.application.expertnewdesign.profile.TimeObject
 import kotlinx.android.synthetic.main.activity_main.container
+import kotlinx.android.synthetic.main.navigation_lessons_fragment.*
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -43,7 +42,6 @@ class MainActivity : AppCompatActivity() {
 
     val LESSON_CHANNEL_ID = "loading_lesson"
     var navigationLessonsFragment: NavigationLessonsFragment? = null
-    //var historyFragment: NavigationLessonsFragment? = null
     var chatFragment: ChatFragment? = null
     var profileFragment: ProfileFragment? = null
 
@@ -74,16 +72,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 return@OnNavigationItemSelectedListener true
             }
-            /*R.id.navigation_history -> {
-                if(historyFragment != null) {
-                    supportFragmentManager.beginTransaction().run {
-                        hide(navigationLessonsFragment!!)
-                        commit()
-                    }
-                    return@OnNavigationItemSelectedListener true
-                }
-                return@OnNavigationItemSelectedListener false
-            }*/
             R.id.navigation_profile -> {
                 if(profileFragment != null) {
                     supportFragmentManager.beginTransaction().run {
@@ -167,6 +155,7 @@ class MainActivity : AppCompatActivity() {
             }
             commit()
         }
+        nav_view.isSelected = false
     }
 
     private fun init(){
@@ -175,7 +164,6 @@ class MainActivity : AppCompatActivity() {
             add(R.id.fragment_container, ProfileFragment(), "profile")
             add(R.id.fragment_container, ChatFragment(), "chat")
             add(R.id.fragment_container, MetadataLoadingFragment(), "metadata_loading")
-            //add(R.id.fragment_container, TestFragment(""), "test")
             commit()
         }
     }
@@ -210,18 +198,21 @@ class MainActivity : AppCompatActivity() {
                 return
             }
         }
-        if(video != null){
-            if(video.isFullScreen()){
-                val fragment = supportFragmentManager.findFragmentByTag("article") as ArticleFragment
-                fragment.fullScreen(false)
-                video.exitFullScreen()
+        val article = supportFragmentManager.findFragmentByTag("article")
+        if(article != null){
+            if((article as ArticleFragment).isFullScreen){
+                article.exitFullScreenMode()
                 return
             }
         }
         val testFragment = supportFragmentManager.findFragmentByTag("test")
-        if(testFragment != null){
-            if(testFragment.isVisible){
-                super.onBackPressed()
+        if(testFragment is TestFragment) {
+            if (testFragment.isVisible) {
+                if (testFragment.isFinal) {
+                    testFragment.showExitAccept()
+                } else {
+                    super.onBackPressed()
+                }
                 return
             }
         }
@@ -240,12 +231,12 @@ class MainActivity : AppCompatActivity() {
         Thread().run{
             val user = profileFragment!!.user
             user.lessonsStat.forEach {
-                putLessonStat(it, profileFragment!!, 4)
+                putLessonStat(it, profileFragment!!, it == user.lessonsStat[0])
             }
         }
     }
 
-    private fun putLessonStat(stat: TimeObject, profileFragment: ProfileFragment, tries: Int){
+    private fun putLessonStat(stat: TimeObject, profileFragment: ProfileFragment, isFirst: Boolean){
 
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -257,19 +248,24 @@ class MainActivity : AppCompatActivity() {
         lessonAPI.putLessonInfo("Token $token", subject, topic, lesson, stat.time.toString()).enqueue(object:
             Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                if(response.isSuccessful){
-                    profileFragment.clearLessons()
-                }else{
-                    if(tries > 0) {
-                        putLessonStat(stat, profileFragment, tries-1)
+                if(!response.isSuccessful){
+                    if(isFirst) {
+                        val json = JsonHelper(filesDir.path)
+                        json.toJson(profileFragment.user)
                     }
                 }
             }
 
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                val json = JsonHelper(filesDir.path)
-                json.toJson(profileFragment.user)
+                if(isFirst) {
+                    val json = JsonHelper(filesDir.path)
+                    val user = profileFragment.user
+                    if(user.name != null) {
+                        json.toJson(profileFragment.user)
+                    }
+                }
             }
         })
     }
+
 }

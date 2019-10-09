@@ -1,7 +1,9 @@
 package com.application.expertnewdesign.lesson.article
 
+import android.app.AlertDialog
 import android.content.Context.AUDIO_SERVICE
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
@@ -12,31 +14,52 @@ import android.os.Handler
 import android.view.*
 import android.view.View.*
 import android.widget.LinearLayout
-import android.widget.RelativeLayout
+import android.widget.Toast
+import androidx.core.view.marginStart
 import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.ViewPager
+import com.application.expertnewdesign.BASE_URL
 import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.R
 import com.application.expertnewdesign.lesson.test.TestFragment
+import com.application.expertnewdesign.lesson.test.TestFragmentPagerAdapter
 import com.application.expertnewdesign.lesson.test.question.QuestionMetadata
 import com.application.expertnewdesign.navigation.Lesson
 import com.application.expertnewdesign.navigation.Statistic
 import com.application.expertnewdesign.profile.ProfileFragment
+import com.application.expertnewdesign.profile.TestObject
 import com.github.barteksc.pdfviewer.util.FitPolicy
+import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.article_fragment.*
 import kotlinx.android.synthetic.main.article_fragment.tabs
 import kotlinx.android.synthetic.main.article_fragment.viewPager
 import kotlinx.android.synthetic.main.music_player.*
+import kotlinx.android.synthetic.main.test_fragment.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.list
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.Query
 import java.io.File
 import java.lang.StringBuilder
 import java.util.*
 
+interface ExamAPI{
+    @GET("getExamTime")
+    fun getExam(@Header("Authorization") token: String,
+                @Query("course") subject: String,
+                @Query("subject") topic: String,
+                @Query("lesson") lesson: String): Call<ResponseBody>
+}
 
-
-class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
+class ArticleFragment(val path: String): Fragment() {
 
     private var mediaPlayer: MediaPlayer? = null
     private var audioManager: AudioManager? = null
@@ -48,38 +71,64 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
 
         override fun run() {
 
-                val millis = mediaPlayer!!.currentPosition
-                val allSeconds = millis/1000
-                val minutes = allSeconds/60
-                val seconds = allSeconds%60
-                val _duration = duration/1000
+            val millis = mediaPlayer!!.currentPosition
+            val allSeconds = millis / 1000
+            val minutes = allSeconds / 60
+            val seconds = allSeconds % 60
+            val durationSeconds = duration / 1000
 
-                if (currentPosition != null) {
-                    if(duration - millis > 200){
-                        progress.progress = ((millis.toFloat()/duration.toFloat())*100).toInt()
-                        currentPosition.text = String.format(
-                            "%d:%02d / %d:%02d", minutes, seconds, _duration/60, _duration%60)
-                    }else{
-                        musicPause.visibility = GONE
-                        musicPlay.visibility = VISIBLE
-                        currentPosition.text = String.format(
-                            "%d:%02d / %d:%02d", _duration/60, _duration%60, _duration/60, _duration%60)
-                        progress.progress = 100
-                    }
+            if (currentPosition != null) {
+                if (duration - millis > 200) {
+                    progress.progress = ((millis.toFloat() / duration.toFloat()) * 100).toInt()
+                    currentPosition.text = String.format(
+                        "%d:%02d / %d:%02d",
+                        minutes,
+                        seconds,
+                        durationSeconds / 60,
+                        durationSeconds % 60
+                    )
+                } else {
+                    musicPause.visibility = GONE
+                    musicPlay.visibility = VISIBLE
+                    currentPosition.text = String.format(
+                        "%d:%02d / %d:%02d",
+                        durationSeconds / 60,
+                        durationSeconds % 60,
+                        durationSeconds / 60,
+                        durationSeconds % 60
+                    )
+                    progress.progress = 100
                 }
+            }
 
             timerHandler.postDelayed(this, 200)
         }
     }
 
+    var isFullScreen = false
+    val getHeight = Handler()
+    private val heightRunnable = object : Runnable {
+
+        override fun run() {
+            if(viewPager != null) {
+                if ((viewPager.adapter as VideoFragmentPagerAdapter).portrait != 0) {
+                    activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                } else {
+                    getHeight.postDelayed(this, 200)
+                }
+            }
+        }
+    }
     private var playlist: List<String>? = null
-    var hasHeight: Boolean = false
     var lastPage: Int = 0
-    var height: Int? = null
 
     private var timeInLesson: Long = 0
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         setHasOptionsMenu(true)
         return inflater.inflate(R.layout.article_fragment, container, false)
     }
@@ -94,16 +143,34 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         showTest()
     }
 
-    private fun setToolbar(){
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        if (!isHidden) {
+            if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                articleToolbar.menu.findItem(R.id.fullScreen).isVisible = true
+                enterFullScreenMode()
+            }
+
+            if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                articleToolbar.menu.findItem(R.id.fullScreen).isVisible = false
+                if (isFullScreen) {
+                    exitFullScreenMode()
+                }
+            }
+        }
+    }
+
+    private fun setToolbar() {
         articleToolbar.inflateMenu(R.menu.article)
         articleBack.setOnClickListener {
             activity!!.onBackPressed()
         }
 
         articleToolbar.setOnMenuItemClickListener {
-            when(it!!.itemId){
-                R.id.playAudio->{
-                    if(mediaPlayer == null) {
+            when (it!!.itemId) {
+                R.id.playAudio -> {
+                    if (mediaPlayer == null) {
                         mediaPlayer = MediaPlayer()
                         mediaPlayer!!.setDataSource("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3")
                         mediaPlayer!!.prepare()
@@ -111,33 +178,27 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
                         musicPlayer.visibility = VISIBLE
                         duration = mediaPlayer!!.duration
                         timerHandler.post(timerRunnable)
-                    }else {
-                        if(musicPlayer.visibility == GONE){
+                    } else {
+                        if (musicPlayer.visibility == GONE) {
                             musicPlayer.visibility = VISIBLE
-                        }else{
+                        } else {
                             musicPlayer.visibility = GONE
                         }
                     }
                 }
-                R.id.toTest->{
-                    if(viewPager.adapter != null) {
+                R.id.toTest -> {
+                    if (viewPager.adapter != null) {
                         val adapter = viewPager.adapter as VideoFragmentPagerAdapter
-                        if(adapter.fragmentsList.isNotEmpty()) {
-                            if(adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer != null) {
+                        if (adapter.fragmentsList.isNotEmpty()) {
+                            if (adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer != null) {
                                 adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer!!.pause()
                             }
                         }
                     }
-                    val articleFragment =
-                        activity!!.supportFragmentManager.findFragmentByTag("article")
-                    activity!!.supportFragmentManager.beginTransaction().run {
-                        add(R.id.fragment_container, TestFragment(path), "test")
-                        hide(articleFragment!!).addToBackStack("lesson_stack")
-                        commit()
-                    }
+                    showTestPicker()
                 }
-                R.id.hideVideo->{
-                    if(viewPager.adapter != null) {
+                R.id.hideVideo -> {
+                    if (viewPager.adapter != null) {
                         val adapter = viewPager.adapter as VideoFragmentPagerAdapter
                         if (adapter.fragmentsList.isNotEmpty()) {
                             if (adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer != null) {
@@ -150,18 +211,21 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
                     articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
                     playlistProgressBar.visibility = GONE
                 }
-                R.id.showVideo->{
+                R.id.showVideo -> {
                     viewPager.visibility = VISIBLE
-                    if(!hasHeight){
-                        viewPager.layoutParams.height = 0
-                    }
                     it.isVisible = false
                     articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
-                    if(playlistProgressBar.max > 1){
+                    if (playlistProgressBar.max > 1) {
                         playlistProgressBar.visibility = VISIBLE
                     }
+                    if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                        enterFullScreenMode()
+                    }
                 }
-                else->{
+                R.id.fullScreen -> {
+                    enterFullScreenMode()
+                }
+                else -> {
                     super.onOptionsItemSelected(it)
                 }
             }
@@ -169,16 +233,17 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         }
     }
 
-    private fun setMusicPlayer(){
+    private fun setMusicPlayer() {
         audioManager = activity!!.getSystemService(AUDIO_SERVICE) as AudioManager
-        progress.progressDrawable.colorFilter = PorterDuffColorFilter(Color.RED, PorterDuff.Mode.SRC_IN)
+        progress.progressDrawable.colorFilter =
+            PorterDuffColorFilter(Color.RED, PorterDuff.Mode.SRC_IN)
 
-        if(File("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3").exists()){
+        if (File("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3").exists()) {
             articleToolbar.menu.findItem(R.id.playAudio).isVisible = true
         }
 
         musicPause.setOnClickListener {
-            if(mediaPlayer!!.isPlaying){
+            if (mediaPlayer!!.isPlaying) {
                 mediaPlayer!!.pause()
             }
             musicPause.visibility = GONE
@@ -186,7 +251,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         }
 
         musicPlay.setOnClickListener {
-            if(!mediaPlayer!!.isPlaying){
+            if (!mediaPlayer!!.isPlaying) {
                 mediaPlayer!!.start()
             }
             musicPause.visibility = VISIBLE
@@ -214,19 +279,23 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         }
     }
 
-    private fun setPlaylist(){
-        playlist = JsonHelper(StringBuilder(context!!.getExternalFilesDir(null).toString())
-            .append(path).append("videos.json")
-            .toString())
+    private fun setPlaylist() {
+        playlist = JsonHelper(
+            StringBuilder(context!!.getExternalFilesDir(null).toString())
+                .append(path).append("videos.json")
+                .toString()
+        )
             .listVideo
-        if(playlist != null) {
+        if (playlist != null) {
             if (playlist!!.isNotEmpty()) {
-                articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
+                activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                 playlistProgressBar.max = playlist!!.size
-                if (playlistProgressBar.max > 1) {
-                    playlistProgressBar.visibility = VISIBLE
-                }
-                viewPager.adapter = VideoFragmentPagerAdapter(playlist!!, childFragmentManager)
+                playlistProgressBar.progressDrawable.colorFilter =
+                    PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
+                viewPager.layoutParams.height = 0
+                viewPager.adapter =
+                    VideoFragmentPagerAdapter(viewPager, playlist!!, childFragmentManager)
+                getHeight.post(heightRunnable)
                 playlistProgressBar.progress = 1
                 tabs.setupWithViewPager(viewPager)
                 viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
@@ -235,9 +304,11 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
                         lastPage = position
                     }
 
-                    override fun onPageScrolled(position: Int, positionOffset: Float,
-                                                positionOffsetPixels: Int
-                    ) {}
+                    override fun onPageScrolled(
+                        position: Int, positionOffset: Float,
+                        positionOffsetPixels: Int
+                    ) {
+                    }
 
                     override fun onPageScrollStateChanged(state: Int) {}
                 })
@@ -245,10 +316,10 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         }
     }
 
-    private fun setPdf(){
+    private fun setPdf() {
         val pdf = File("${context!!.getExternalFilesDir(null)}${path}article.pdf")
-        if(pdf.exists()){
-            if(pdf.length() > 0) {
+        if (pdf.exists()) {
+            if (pdf.length() > 0) {
                 pdfView.fromFile(pdf)
                     .spacing(0)
                     .pageFitPolicy(FitPolicy.WIDTH)
@@ -260,9 +331,6 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         if (playlist != null) {
             if (playlist!!.isNotEmpty()) {
                 viewPager.visibility = VISIBLE
-                if (!hasHeight) {
-                    viewPager.layoutParams.height = 0
-                }
                 articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
                 if (playlistProgressBar.max > 1) {
                     playlistProgressBar.visibility = VISIBLE
@@ -271,9 +339,10 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         }
     }
 
-    private fun showTest(){
-        val file = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
-        if(file.exists()) {
+    private fun showTest() {
+        val file =
+            File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
+        if (file.exists()) {
             val meta = Json(JsonConfiguration.Stable).parse(
                 QuestionMetadata.serializer().list,
                 file.readText()
@@ -284,50 +353,64 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         }
     }
 
-    override fun height(_height: Int) {
-        if(!hasHeight) {
-            height = _height
-            viewPager.layoutParams.height = height!!
+    fun enterFullScreenMode() {
+        articleToolbar.visibility = GONE
+        activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        activity!!.window.decorView.systemUiVisibility = SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            .or(
+                SYSTEM_UI_FLAG_FULLSCREEN
+                    .or(
+                        SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            .or(
+                                SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                                    .or(
+                                        SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                            .or(SYSTEM_UI_FLAG_LAYOUT_STABLE)
+                                    )
+                            )
+                    )
+            )
+        if (viewPager.visibility == VISIBLE) {
+            viewPager.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
         }
+        isFullScreen = true
     }
 
-    override fun fullScreen(isFullScreen: Boolean) {
-        if(isFullScreen){
-            articleToolbar.visibility = GONE
-            pdfView.visibility = GONE
-            val params = viewPager.layoutParams as LinearLayout.LayoutParams
-            params.height = ViewGroup.LayoutParams.MATCH_PARENT
-            activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            activity!!.window.decorView.systemUiVisibility =
-                SYSTEM_UI_FLAG_IMMERSIVE
-                    .or(SYSTEM_UI_FLAG_FULLSCREEN
-                        .or(SYSTEM_UI_FLAG_HIDE_NAVIGATION))
-        }else{
-            articleToolbar.visibility = VISIBLE
-            pdfView.visibility = VISIBLE
-            activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            activity!!.window.decorView.systemUiVisibility = SYSTEM_UI_FLAG_VISIBLE
-            val params = viewPager.layoutParams as RelativeLayout.LayoutParams
-            params.height = height!!
-            viewPager.layoutParams = params
+    fun exitFullScreenMode() {
+        articleToolbar.visibility = VISIBLE
+        activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        activity!!.window.decorView.systemUiVisibility = SYSTEM_UI_FLAG_VISIBLE
+        viewPager.layoutParams.height = (viewPager.adapter as VideoFragmentPagerAdapter).portrait
+        if (viewPager.visibility == VISIBLE) {
+            (viewPager.adapter as VideoFragmentPagerAdapter)
+                .fragmentsList[viewPager.currentItem]
+                .initializedYouTubePlayer!!.pause()
+            viewPager.visibility = GONE
+            articleToolbar.menu.findItem(R.id.hideVideo).isVisible = false
+            articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
+            playlistProgressBar.visibility = GONE
         }
+        isFullScreen = false
     }
 
-    private fun publishStat(stat: Statistic){
-        val profileFragment = activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment
+    private fun publishStat(stat: Statistic) {
+        val profileFragment =
+            activity!!.supportFragmentManager.findFragmentByTag("profile") as ProfileFragment
         profileFragment.addStat(stat)
     }
 
     override fun onResume() {
         super.onResume()
 
-        timeInLesson = Calendar.getInstance().timeInMillis
+        if (timeInLesson.compareTo(0) == 0) {
+            timeInLesson = Calendar.getInstance().timeInMillis
+        }
     }
 
     override fun onPause() {
         super.onPause()
 
-        if(timeInLesson.compareTo(0) != 0) {
+        if (timeInLesson.compareTo(0) != 0) {
             val currentTime = Calendar.getInstance().timeInMillis
             val lesson = Lesson(path)
 
@@ -339,14 +422,94 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
         }
     }
 
-    override fun onHiddenChanged(hidden: Boolean) {
-        super.onHiddenChanged(hidden)
+    fun showVideoButton() {
+        articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
+    }
 
-        if(!isHidden){
-            onResume()
-        }else{
-            onPause()
-        }
+    private fun showTestPicker() {
+        val builder = AlertDialog.Builder(context)
+        builder.setTitle("Выбор теста:")
+            .setMessage("""Выберите тип тестирования""".trimMargin())
+            .setPositiveButton("Контрольный") { dialog, _ ->
+                dialog.cancel()
+                showFinalTestAlert()
+            }
+            .setNegativeButton("Тренировочный") { dialog, _ ->
+                dialog.cancel()
+                val articleFragment =
+                    activity!!.supportFragmentManager.findFragmentByTag("article")
+                activity!!.supportFragmentManager.beginTransaction().run {
+                    add(R.id.fragment_container, TestFragment(path), "test")
+                    hide(articleFragment!!).addToBackStack("lesson_stack")
+                    commit()
+                }
+            }
+        val alert = builder.create()
+        alert.show()
+        val positiveButton = alert.getButton(AlertDialog.BUTTON_NEUTRAL)
+        val parent = positiveButton.parent as LinearLayout
+        parent.gravity = Gravity.CENTER_HORIZONTAL
+        parent.setPadding(0, 0, 0, 20)
+        val leftSpacer = parent.getChildAt(1)
+        leftSpacer.visibility = GONE
+    }
+
+    private fun showFinalTestAlert(){
+        val builder = AlertDialog.Builder(context)
+        builder.setTitle("Внимание")
+            .setMessage("""Убедитесь, что ближайшие 20 минут
+                |вас ничто не будет отвлекать
+                |Контроль можно пройти только один раз
+            """.trimMargin())
+            .setPositiveButton("Начало") { dialog, _ ->
+                dialog.cancel()
+                getPass()
+            }
+            .setNegativeButton("Отмена") { dialog, _ ->
+                dialog.cancel()
+            }
+        val alert = builder.create()
+        alert.show()
+        val positiveButton = alert.getButton(AlertDialog.BUTTON_NEUTRAL)
+        val parent = positiveButton.parent as LinearLayout
+        parent.gravity = Gravity.CENTER_HORIZONTAL
+        parent.setPadding(0, 0, 0, 20)
+        val leftSpacer = parent.getChildAt(1)
+        leftSpacer.visibility = GONE
+    }
+
+    private fun getPass(){
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .build()
+
+        val examAPI = retrofit.create(ExamAPI::class.java)
+        val (_,subject, topic, lesson) = path.split("/")
+        val token = activity!!.intent.getStringExtra("token")!!
+        examAPI.getExam("Token $token", subject, topic, lesson).enqueue(
+            object: Callback<ResponseBody>{
+                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                    if(response.isSuccessful){
+                        val time = response.body().string().toLong()
+                        if(time > 0){
+                            val articleFragment =
+                                activity!!.supportFragmentManager.findFragmentByTag("article")
+                            activity!!.supportFragmentManager.beginTransaction().run {
+                                add(R.id.fragment_container, TestFragment(path, isFinal = true, time = time-10*1000), "test")
+                                hide(articleFragment!!).addToBackStack("lesson_stack")
+                                commit()
+                            }
+                        }else{
+                            Toast.makeText(context!!, "Тест уже пройден", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+
+                }
+            }
+        )
     }
 
     private fun releaseMP() {
@@ -364,6 +527,7 @@ class ArticleFragment(val path: String): Fragment(), VideoFragment.PlayerLayout{
     override fun onDestroy() {
         timerHandler.removeCallbacks(timerRunnable)
         releaseMP()
+        activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
         super.onDestroy()
     }
 }

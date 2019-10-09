@@ -12,18 +12,16 @@ class User{
     var rights: String? = null
     @SerializedName("lessons")
     var lessonsStat: List<TimeObject> = emptyList()
-    @SerializedName("tests")
-    var testsStat: List<TestObject> = emptyList()
 }
 
 data class TimeObject(
-    @SerializedName("lesson")
+    @SerializedName("lessonPath")
     val lesson: String,
     @SerializedName("time")
     var time: Long)
 
 data class TestObject(
-    @SerializedName("lesson")
+    @SerializedName("lessonPath")
     val lesson: String,
     @SerializedName("test")
     val test: List<QuestionObject>)
