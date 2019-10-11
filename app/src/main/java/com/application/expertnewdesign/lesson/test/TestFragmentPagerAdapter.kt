@@ -57,8 +57,8 @@ class TestFragmentPagerAdapter(fm: FragmentManager,
         return questions[position].toString()
     }
 
-    fun getGrades(): List<QuestionObject>{
-        val grades: MutableList<QuestionObject> = arrayListOf()
+    fun getResult(): List<QuestionObject>{
+        val result: MutableList<QuestionObject> = emptyList<QuestionObject>().toMutableList()
         for((index, element) in questions.withIndex()){
             element.check()
             val grade = element.earnedPoints
@@ -72,7 +72,16 @@ class TestFragmentPagerAdapter(fm: FragmentManager,
             if(index == lastPosition){
                 lastState = dotsList[index].drawable
             }
-            grades.add(QuestionObject(element.questionBase.questionID, grade, element.questionBase.maxGrade))
+            result.add(QuestionObject(element.questionBase.questionID, grade, element.questionBase.maxGrade))
+        }
+        return result
+    }
+
+    fun getGrades(): List<QuestionObject>{
+        val grades: MutableList<QuestionObject> = emptyList<QuestionObject>().toMutableList()
+        for(element in questions){
+            element.grade()
+            grades.add(QuestionObject(element.questionBase.questionID, element.earnedPoints, element.questionBase.maxGrade))
         }
         return grades
     }

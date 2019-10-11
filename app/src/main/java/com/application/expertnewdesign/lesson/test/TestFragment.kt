@@ -46,6 +46,15 @@ interface TestStatAPI{
                     @Query("answers") array: String): Call<ResponseBody>
 }
 
+interface TestFinalAPI{
+    @PUT("updateSelfAnswersFinal")
+    fun putTestInfo(@Header("Authorization") token: String,
+                    @Query("course") subject: String,
+                    @Query("subject") topic: String,
+                    @Query("lesson") lesson: String,
+                    @Query("answers") array: String): Call<ResponseBody>
+}
+
 class TestFragment(val path: String, var isFinal: Boolean = false, val time: Long = 1200000) : Fragment(){
 
     //Таймер
@@ -67,17 +76,21 @@ class TestFragment(val path: String, var isFinal: Boolean = false, val time: Lon
                     }
                 }
 
-                timerHandler.postDelayed(this, 500)
+                timerHandler.postDelayed(this, 1000)
             }else{
                 val resultList = (viewPager.adapter as TestFragmentPagerAdapter).getGrades()
+                putTestFinal(TestObject(path, resultList))
+            }
+        }
+    }
+
+    val sendHandler = Handler()
+    private val sendRunnable = object: Runnable{
+        override fun run() {
+            if(isFinal) {
+                val resultList = adapter!!.getGrades()
                 putTestStat(TestObject(path, resultList))
-                testToolbar.menu.findItem(R.id.finish).isVisible = false
-                if (timer != null) {
-                    timer.setTextColor(Color.GRAY)
-                    timer.text = String.format("%02d:%02d", 0, 0)
-                }
-                showResult(resultList)
-                isFinal = false
+                sendHandler.postDelayed(this, 5000)
             }
         }
     }
@@ -113,6 +126,7 @@ class TestFragment(val path: String, var isFinal: Boolean = false, val time: Lon
         }*/
         if(isFinal){
             setTimer()
+            sendHandler.postDelayed(sendRunnable, 5000)
         }
     }
 
@@ -121,18 +135,12 @@ class TestFragment(val path: String, var isFinal: Boolean = false, val time: Lon
         testToolbar.setOnMenuItemClickListener { menuItem ->
             when(menuItem!!.itemId){
                 R.id.finish->{
-                    val resultList = adapter!!.getGrades()
                     if(isFinal) {
-                        putTestStat(TestObject(path, resultList))
-                        timerHandler.removeCallbacks(timerRunnable)
-                        if (timer != null) {
-                            timer.setTextColor(Color.GRAY)
-                            timer.text = String.format("%02d:%02d", 0, 0)
-                        }
-                        menuItem.isVisible = false
-                        isFinal = false
+                        showResult()
+                    }else{
+                        val resultList = adapter!!.getResult()
+                        showGrades(resultList)
                     }
-                    showResult(resultList)
                 }
                 else->{
                     super.onOptionsItemSelected(menuItem)
@@ -176,7 +184,7 @@ class TestFragment(val path: String, var isFinal: Boolean = false, val time: Lon
         })
     }
 
-    private fun showResult(questions: List<QuestionObject>){
+    private fun showGrades(questions: List<QuestionObject>){
         var earned = 0
         var max = 0
         questions.forEach {
@@ -260,13 +268,47 @@ class TestFragment(val path: String, var isFinal: Boolean = false, val time: Lon
         testAPI.putTestInfo("Token $token", subject, topic, lesson, jsonStr).enqueue(object: Callback<ResponseBody>{
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if(response.isSuccessful){
+
+                }else{
+
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+
+            }
+        })
+    }
+
+    private fun putTestFinal(stat: TestObject){
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .build()
+
+        val testAPI = retrofit.create(TestFinalAPI::class.java)
+        val (_,subject, topic, lesson) = path.split("/")
+        val token = activity!!.intent.getStringExtra("token")!!
+        val jsonStr = Gson().toJson(stat.test)
+        testAPI.putTestInfo("Token $token", subject, topic, lesson, jsonStr).enqueue(object: Callback<ResponseBody>{
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                if(response.isSuccessful){
                     if(activity != null) {
                         Toast.makeText(
                             context,
                             "Результат сохранен",
-                            Toast.LENGTH_LONG
+                            Toast.LENGTH_SHORT
                         ).show()
                     }
+                    timerHandler.removeCallbacks(timerRunnable)
+                    if (timer != null) {
+                        timer.setTextColor(Color.GRAY)
+                        timer.text = String.format("%02d:%02d", 0, 0)
+                    }
+                    testToolbar.menu.findItem(R.id.finish).isVisible = false
+                    val resultList = (viewPager.adapter as TestFragmentPagerAdapter).getResult()
+                    showGrades(resultList)
+                    isFinal = false
                 }
             }
 
@@ -300,7 +342,32 @@ class TestFragment(val path: String, var isFinal: Boolean = false, val time: Lon
             }
         val alert = builder.create()
         alert.show()
-        val positiveButton = alert.getButton(AlertDialog.BUTTON_NEUTRAL)
+        val positiveButton = alert.getButton(AlertDialog.BUTTON_POSITIVE)
+        val parent = positiveButton.parent as LinearLayout
+        parent.gravity = Gravity.CENTER_HORIZONTAL
+        parent.setPadding(0, 0, 0, 20)
+        val leftSpacer = parent.getChildAt(1)
+        leftSpacer.visibility = GONE
+    }
+
+    fun showResult(){
+        val builder = AlertDialog.Builder(context)
+        builder.setTitle("Результат")
+            .setMessage("""
+                |Оставшееся время обнулится""".trimMargin())
+            .setPositiveButton("Узнать результат") { dialog, _ ->
+                dialog.cancel()
+                val resultList = (viewPager.adapter as TestFragmentPagerAdapter).getGrades()
+                putTestFinal(TestObject(path, resultList))
+            }
+            .setNegativeButton("Еще подумаю") { dialog, _ ->
+                dialog.cancel()
+                val resultList = adapter!!.getGrades()
+                putTestStat(TestObject(path, resultList))
+            }
+        val alert = builder.create()
+        alert.show()
+        val positiveButton = alert.getButton(AlertDialog.BUTTON_POSITIVE)
         val parent = positiveButton.parent as LinearLayout
         parent.gravity = Gravity.CENTER_HORIZONTAL
         parent.setPadding(0, 0, 0, 20)
@@ -310,13 +377,14 @@ class TestFragment(val path: String, var isFinal: Boolean = false, val time: Lon
 
     override fun onStop(){
         if(isFinal) {
-            /*val resultList = adapter!!.getGrades()
-            */
+            val resultList = adapter!!.getGrades()
+            putTestStat(TestObject(path, resultList))
         }
         super.onStop()
     }
 
     override fun onDestroyView() {
+        sendHandler.removeCallbacks(sendRunnable)
         timerHandler.removeCallbacks(timerRunnable)
         super.onDestroyView()
     }

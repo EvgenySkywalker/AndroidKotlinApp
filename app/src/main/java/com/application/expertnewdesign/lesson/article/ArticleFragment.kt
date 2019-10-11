@@ -170,6 +170,7 @@ class ArticleFragment(val path: String): Fragment() {
         articleToolbar.setOnMenuItemClickListener {
             when (it!!.itemId) {
                 R.id.playAudio -> {
+                    hideVideo()
                     if (mediaPlayer == null) {
                         mediaPlayer = MediaPlayer()
                         mediaPlayer!!.setDataSource("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3")
@@ -198,20 +199,15 @@ class ArticleFragment(val path: String): Fragment() {
                     showTestPicker()
                 }
                 R.id.hideVideo -> {
-                    if (viewPager.adapter != null) {
-                        val adapter = viewPager.adapter as VideoFragmentPagerAdapter
-                        if (adapter.fragmentsList.isNotEmpty()) {
-                            if (adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer != null) {
-                                adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer!!.pause()
-                            }
-                        }
-                    }
-                    viewPager.visibility = GONE
-                    it.isVisible = false
-                    articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
-                    playlistProgressBar.visibility = GONE
+                    hideVideo()
                 }
                 R.id.showVideo -> {
+                    if (mediaPlayer!!.isPlaying) {
+                        mediaPlayer!!.pause()
+                        musicPause.visibility = GONE
+                        musicPlay.visibility = VISIBLE
+                    }
+                    musicPlayer.visibility = GONE
                     viewPager.visibility = VISIBLE
                     it.isVisible = false
                     articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
@@ -436,6 +432,13 @@ class ArticleFragment(val path: String): Fragment() {
             }
             .setNegativeButton("Тренировочный") { dialog, _ ->
                 dialog.cancel()
+                if(mediaPlayer != null) {
+                    if (mediaPlayer!!.isPlaying) {
+                        mediaPlayer!!.pause()
+                        musicPause.visibility = GONE
+                        musicPlay.visibility = VISIBLE
+                    }
+                }
                 val articleFragment =
                     activity!!.supportFragmentManager.findFragmentByTag("article")
                 activity!!.supportFragmentManager.beginTransaction().run {
@@ -492,6 +495,13 @@ class ArticleFragment(val path: String): Fragment() {
                     if(response.isSuccessful){
                         val time = response.body().string().toLong()
                         if(time > 0){
+                            if(mediaPlayer != null) {
+                                if (mediaPlayer!!.isPlaying) {
+                                    mediaPlayer!!.pause()
+                                    musicPause.visibility = GONE
+                                    musicPlay.visibility = VISIBLE
+                                }
+                            }
                             val articleFragment =
                                 activity!!.supportFragmentManager.findFragmentByTag("article")
                             activity!!.supportFragmentManager.beginTransaction().run {
@@ -522,6 +532,23 @@ class ArticleFragment(val path: String): Fragment() {
             }
 
         }
+    }
+
+    fun hideVideo(){
+        if (viewPager.adapter != null) {
+            val adapter = viewPager.adapter as VideoFragmentPagerAdapter
+            if (adapter.fragmentsList.isNotEmpty()) {
+                if (adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer != null) {
+                    adapter.fragmentsList[viewPager.currentItem].initializedYouTubePlayer!!.pause()
+                }
+            }
+        }
+        viewPager.visibility = GONE
+        if(articleToolbar.menu.findItem(R.id.hideVideo).isVisible) {
+            articleToolbar.menu.findItem(R.id.hideVideo).isVisible = false
+            articleToolbar.menu.findItem(R.id.showVideo).isVisible = true
+        }
+        playlistProgressBar.visibility = GONE
     }
 
     override fun onDestroy() {

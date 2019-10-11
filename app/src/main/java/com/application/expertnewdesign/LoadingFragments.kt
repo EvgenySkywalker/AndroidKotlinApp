@@ -39,6 +39,9 @@ import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.OkHttpClient
 import retrofit2.http.*
 import java.io.*
+import java.lang.IllegalStateException
+import java.net.ConnectException
+import java.net.ProtocolException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.math.roundToInt
@@ -261,6 +264,7 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
 
 class DownloadService : IntentService("Download Service") {
 
+    private var downloadError = false
     private lateinit var lessonPath: String
     private lateinit var token: String
     private var totalFileSize: Int = 0
@@ -290,15 +294,15 @@ class DownloadService : IntentService("Download Service") {
         val (subject, topic, lesson) = lessonPath.substringAfter("/").split("/")
         val request = lessonAPI.loadLesson("Token $token", subject, topic, lesson)
 
-        try {
-
-            downloadFile(request.execute().body())
-
-        } catch (e: TimeoutException) {
-
-            Toast.makeText(applicationContext, e.message, Toast.LENGTH_SHORT).show()
-
-        }
+            try {
+                downloadFile(request.execute().body())
+            } catch (e: TimeoutException) {
+                downloadError = true
+            } catch (i: IllegalStateException){
+                downloadError = true
+            } catch (c: ConnectException){
+                downloadError = true
+            }
     }
 
 
@@ -342,7 +346,11 @@ class DownloadService : IntentService("Download Service") {
             }
 
             output.write(data, 0, count)
-            count = bis.read(data)
+            try {
+                count = bis.read(data)
+            }catch (p: ProtocolException){
+                downloadError = true
+            }
         }
         onDownloadComplete()
         output.flush()
@@ -362,10 +370,15 @@ class DownloadService : IntentService("Download Service") {
     }
 
     private fun onDownloadComplete(){
-
-        val download = Download()
-        download.progress = 100
-        sendIntent(download)
+        if(!downloadError) {
+            val download = Download()
+            download.progress = 100
+            sendIntent(download)
+        }else{
+            val download = Download()
+            download.progress = 0
+            sendIntent(download)
+        }
     }
 }
 

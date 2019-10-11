@@ -2,12 +2,12 @@ package com.application.expertnewdesign.profile
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.application.expertnewdesign.BASE_URL
 import com.application.expertnewdesign.JsonHelper
@@ -27,7 +27,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Header
 import java.io.File
-import java.sql.Time
 
 interface UserInfoAPI{
     @GET("getSelfInfo")
@@ -46,10 +45,15 @@ class ProfileFragment : Fragment(){
     val user : User
         get() = getUserData()
 
-    private var name: String? = null
+    private var neTotName: String? = null
     private var firstName: String? = null
     private var lastName: String? = null
     private var rights: String? = null
+
+    val profileDataHandler = Handler()
+    private val dataRunnable = Runnable {
+        getUserInfo()
+    }
 
     private var lessonStat: MutableList<TimeObject> = emptyList<TimeObject>().toMutableList()
 
@@ -83,8 +87,8 @@ class ProfileFragment : Fragment(){
 
     private fun getUserData(): User{
         val user = User()
-        if(name != null) {
-            user.name = name
+        if(neTotName != null) {
+            user.name = neTotName
             user.firstName = firstName
             user.lastName = lastName
             user.rights = rights
@@ -139,7 +143,7 @@ class ProfileFragment : Fragment(){
                         loading_stat.visibility = GONE
                         val user = response.body()
                         if(user.name != null) {
-                            name = user.name!!
+                            neTotName = user.name
                             firstName = user.firstName
                             lastName = user.lastName
                             rights = getRightsRU(user.rights!!)
@@ -157,21 +161,19 @@ class ProfileFragment : Fragment(){
                                 setUserData()
                             }
                         }
-                        getLocal()
                     }
+                    getUserStat()
                 }else{
                     infinite_loading.visibility = GONE
                     loading_stat.text = "Не удалось загрузить данные"
-                    Toast.makeText(context!!, "Пользователь не найден", Toast.LENGTH_SHORT).show()
-                    getLocal()
+                    profileDataHandler.postDelayed(dataRunnable, 5000)
                 }
             }
 
             override fun onFailure(call: Call<User>, t: Throwable) {
                 infinite_loading.visibility = GONE
                 loading_stat.text = "Не удалось загрузить данные"
-                Toast.makeText(context!!, "Сервер не отвечает", Toast.LENGTH_SHORT).show()
-                getLocal()
+                profileDataHandler.postDelayed(dataRunnable, 5000)
             }
         })
     }
@@ -218,7 +220,8 @@ class ProfileFragment : Fragment(){
             val min = lessonTime / 60
             return "$min минут(ы)"
         }
-            nameView.text = name
+            nameView.text = neTotName
+            nameView.visibility = VISIBLE
             firstNameView.text = firstName
             profileFirstName.visibility = VISIBLE
             lastNameView.text = lastName
@@ -231,8 +234,8 @@ class ProfileFragment : Fragment(){
 
 
     private fun loadUser(){
+        getLocal()
         getUserInfo()
-        getUserStat()
     }
 
     fun getLocal(){
@@ -240,8 +243,8 @@ class ProfileFragment : Fragment(){
         if(userLocal.exists()) {
             val json = JsonHelper("${activity!!.filesDir.path}/user.json")
             val user = json.user
-            if(user.name != null && (name == null || user.name == name)) {
-                name = user.name!!
+            if(user.name != null) {
+                neTotName = user.name!!
                 firstName = user.firstName!!
                 lastName = user.lastName
                 rights = getRightsRU(user.rights!!)
@@ -272,5 +275,10 @@ class ProfileFragment : Fragment(){
                 return value
             }
         }
+    }
+
+    override fun onDestroy() {
+        profileDataHandler.removeCallbacks(dataRunnable)
+        super.onDestroy()
     }
 }
