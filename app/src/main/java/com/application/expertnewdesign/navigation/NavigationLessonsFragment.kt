@@ -7,17 +7,21 @@ import android.view.View.*
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
+import com.application.expertnewdesign.JsonHelper
 import com.application.expertnewdesign.LessonLoadingFragment
 import com.application.expertnewdesign.MainActivity
 import com.application.expertnewdesign.R
+import com.application.expertnewdesign.lesson.article.ArticleFragment
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.navigation_lessons_fragment.*
 import kotlinx.android.synthetic.main.recycler_view_item.view.*
+import java.io.File
 import java.lang.StringBuilder
 import java.util.*
 
 class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
 
-    val subjectList: List<Subject> = metadata.subjectList
+    val subjectList: List<Subject>? = metadata.subjectList
     var currentSubject: Subject? = null
     var currentTopic: Topic? = null
     var currentLesson: Lesson? = null
@@ -44,42 +48,50 @@ class NavigationLessonsFragment(metadata: MetadataNavigation): Fragment(){
     }
 
     fun openLesson(){
-        fragmentManager!!.beginTransaction().run{
-            add(R.id.fragment_container,
-                LessonLoadingFragment(lessonPath!!), "lesson_loading")
-            hide(fragmentManager!!.findFragmentByTag("navigation")!!)
-            hide(fragmentManager!!.findFragmentByTag("profile")!!)
-            hide(fragmentManager!!.findFragmentByTag("chat")!!)
-            addToBackStack("loading")
-            commit()
+        var loading = true
+        val file = File("${context!!.getExternalFilesDir(null)}${lessonPath}/config.cfg")
+        if(file.exists()){
+            val time = file.bufferedReader().readLine().toLong()
+            if(time == currentLesson!!.lastUpdate){
+                fragmentManager!!.beginTransaction().run {
+                    add(R.id.fragment_container, ArticleFragment("$lessonPath/"), "article")
+                    hide(fragmentManager!!.findFragmentByTag("navigation")!!)
+                    hide(fragmentManager!!.findFragmentByTag("profile")!!)
+                    hide(fragmentManager!!.findFragmentByTag("chat")!!)
+                    addToBackStack("lesson_stack")
+                    commit()
+                }
+                activity!!.nav_view.visibility = GONE
+                loading = false
+            }
         }
-        //Без сервера
-        /*fragmentManager!!.beginTransaction().run {
-            add(R.id.fragment_container, ArticleFragment(""), "article")
-            hide(fragmentManager!!.findFragmentByTag("navigation")!!)
-            addToBackStack("lesson_stack")
-            commit()
+        if(loading) {
+            fragmentManager!!.beginTransaction().run {
+                add(R.id.fragment_container, LessonLoadingFragment(lessonPath!!, currentLesson!!.lastUpdate!!), "lesson_loading")
+                hide(fragmentManager!!.findFragmentByTag("navigation")!!)
+                hide(fragmentManager!!.findFragmentByTag("profile")!!)
+                hide(fragmentManager!!.findFragmentByTag("chat")!!)
+                addToBackStack("loading")
+                commit()
+            }
         }
-        fragmentManager!!.beginTransaction().run{
-            remove(fragmentManager!!.findFragmentByTag("lesson_loading")!!)
-            commit()
-        }
-        activity!!.nav_view.visibility = GONE*/
     }
 
     fun showSubjects(){
         navigationBack.visibility = GONE
-        val customAdapter = CustomAdapter(
-            context!!,
-            subjectList.sortedBy { it.name })
-        customAdapter.setOnItemClickListener(object :
-            CustomAdapter.OnItemClickListener {
-            override fun onItemClick(view: View, position: Int) {
-                currentSubject = subjectList.sortedBy { it.name }[position]
-                showTopics()
-            }
-        })
-        recyclerView.adapter = customAdapter
+        if(subjectList != null) {
+            val customAdapter = CustomAdapter(
+                context!!,
+                subjectList.sortedBy { it.name })
+            customAdapter.setOnItemClickListener(object :
+                CustomAdapter.OnItemClickListener {
+                override fun onItemClick(view: View, position: Int) {
+                    currentSubject = subjectList.sortedBy { it.name }[position]
+                    showTopics()
+                }
+            })
+            recyclerView.adapter = customAdapter
+        }
     }
 
     fun showTopics(){

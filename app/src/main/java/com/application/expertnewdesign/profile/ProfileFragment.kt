@@ -77,8 +77,10 @@ class ProfileFragment : Fragment(){
             val intent = Intent(activity, LoginActivity::class.java)
             intent.putExtra("relogin", true)
             Thread().run{
-                val file = File("${activity!!.filesDir.path}/token.txt")
-                file.delete()
+                val file1 = File("${activity!!.filesDir.path}/token.txt")
+                file1.delete()
+                val file2 = File("${activity!!.filesDir.path}/user.data")
+                file2.delete()
             }
             activity!!.startActivity(intent)
             activity!!.finish()
@@ -138,25 +140,16 @@ class ProfileFragment : Fragment(){
         userAPI.getUserInfo("Token $token").enqueue(object: Callback<User>{
             override fun onResponse(call: Call<User>, response: Response<User>) {
                 if(response.isSuccessful){
+                    infinite_loading.visibility = GONE
+                    loading_stat.visibility = GONE
                     Thread().run{
-                        infinite_loading.visibility = GONE
-                        loading_stat.visibility = GONE
                         val user = response.body()
                         if(user.name != null) {
                             neTotName = user.name
                             firstName = user.firstName
                             lastName = user.lastName
                             rights = getRightsRU(user.rights!!)
-                            val chatFragment = activity!!.supportFragmentManager
-                                .findFragmentByTag("chat") as ChatFragment
-                            when (name) {
-                                "admin" -> {
-                                    chatFragment.username = "$firstName"
-                                }
-                                else -> {
-                                    chatFragment.username = "$firstName($name)"
-                                }
-                            }
+                            setChatParams()
                             activity!!.runOnUiThread {
                                 setUserData()
                             }
@@ -164,8 +157,10 @@ class ProfileFragment : Fragment(){
                     }
                     getUserStat()
                 }else{
-                    infinite_loading.visibility = GONE
-                    loading_stat.text = "Не удалось загрузить данные"
+                    if(infinite_loading != null) {
+                        infinite_loading.visibility = GONE
+                        loading_stat.text = "Не удалось загрузить данные"
+                    }
                     profileDataHandler.postDelayed(dataRunnable, 5000)
                 }
             }
@@ -236,6 +231,34 @@ class ProfileFragment : Fragment(){
     private fun loadUser(){
         getLocal()
         getUserInfo()
+    }
+
+    private fun setChatParams(){
+        val chatFragment = activity!!.supportFragmentManager
+            .findFragmentByTag("chat") as ChatFragment
+        when (neTotName) {
+            "admin" -> {
+                chatFragment.username = "Администратор"
+            }
+            else -> {
+                chatFragment.username = "$neTotName($firstName)"
+            }
+        }
+        when(rights){
+            "Администратор"->{
+                chatFragment.rights = "moderator"
+            }
+            "Преподаватель"->{
+                chatFragment.rights = "moderator"
+            }
+            else->{
+                chatFragment.rights = "user"
+            }
+        }
+        val file = File("${activity!!.filesDir.path}/user.data")
+        file.bufferedWriter().use{
+            it.write("${chatFragment.username} ${chatFragment.rights}")
+        }
     }
 
     fun getLocal(){

@@ -40,8 +40,13 @@ class JsonHelper(private val path: String){
 
     fun toJson(metadata: MetadataNavigation){
         val jsonStr = Gson().toJson(metadata)
-        val file = File("$path/metadata.json")
-        file.bufferedWriter().use{
+        val fileLast = File("$path/metadata.json")
+        val fileOld = File("$path/metadataOld.json")
+        if(fileLast.exists()) {
+            fileLast.renameTo(fileOld)
+        }
+        val fileNew = File("$path/metadata.json")
+        fileNew.bufferedWriter().use{
             it.write(jsonStr)
         }
     }

@@ -209,11 +209,28 @@ class TestFragment(val path: String, var isFinal: Boolean = false, val time: Lon
 
     //С этим делай че хошь. Будет кайф, если будет выплевывать вопросики
     private fun setQuestions(){
-        val src = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
+        val testPath = "${context!!.getExternalFilesDir(null)}${path}"
+        var src: File? = null
+        if(isFinal){
+            val final = File("${testPath}exam.json")
+            if(final.exists()){
+                val meta = Json(JsonConfiguration.Stable).parse(
+                    QuestionMetadata.serializer().list,
+                    final.readText()
+                )
+                if(meta.isNotEmpty()) {
+                    src = final
+                }
+            }
+        }
 
         val directory = File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).toString())
 
-        val meta = Json(JsonConfiguration.Stable).parse(QuestionMetadata.serializer().list, src.readText())
+        val meta = if(src != null) {
+            Json(JsonConfiguration.Stable).parse(QuestionMetadata.serializer().list, src.readText())
+        }else{
+            Json(JsonConfiguration.Stable).parse(QuestionMetadata.serializer().list, File("${testPath}exercise.json").readText())
+        }
 
         val questions = emptyList<Question>().toMutableList()
 

@@ -25,7 +25,9 @@ data class Lesson(
     @SerializedName("name")
     val name: String,
     @SerializedName("description")
-    val description: String? = ""
+    val description: String = "",
+    @SerializedName("lastUpdate")
+    val lastUpdate: Long? = -1
 ): Statistic()
 
 open class Statistic{

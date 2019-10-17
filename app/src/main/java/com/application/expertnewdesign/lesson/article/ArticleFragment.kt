@@ -1,7 +1,11 @@
 package com.application.expertnewdesign.lesson.article
 
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Context.AUDIO_SERVICE
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Color
@@ -17,10 +21,9 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.view.marginStart
 import androidx.fragment.app.Fragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager.widget.ViewPager
-import com.application.expertnewdesign.BASE_URL
-import com.application.expertnewdesign.JsonHelper
-import com.application.expertnewdesign.R
+import com.application.expertnewdesign.*
 import com.application.expertnewdesign.lesson.test.TestFragment
 import com.application.expertnewdesign.lesson.test.TestFragmentPagerAdapter
 import com.application.expertnewdesign.lesson.test.question.QuestionMetadata
@@ -30,9 +33,11 @@ import com.application.expertnewdesign.profile.ProfileFragment
 import com.application.expertnewdesign.profile.TestObject
 import com.github.barteksc.pdfviewer.util.FitPolicy
 import com.google.gson.GsonBuilder
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.article_fragment.*
 import kotlinx.android.synthetic.main.article_fragment.tabs
 import kotlinx.android.synthetic.main.article_fragment.viewPager
+import kotlinx.android.synthetic.main.loading_fragment.*
 import kotlinx.android.synthetic.main.music_player.*
 import kotlinx.android.synthetic.main.test_fragment.*
 import kotlinx.serialization.json.Json
@@ -59,8 +64,9 @@ interface ExamAPI{
                 @Query("lesson") lesson: String): Call<ResponseBody>
 }
 
-class ArticleFragment(val path: String): Fragment() {
+class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
 
+    lateinit var intent: Intent
     private var mediaPlayer: MediaPlayer? = null
     private var audioManager: AudioManager? = null
 
@@ -136,6 +142,12 @@ class ArticleFragment(val path: String): Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        if(time.compareTo(-1) != 0){
+            val file = File("${activity!!.getExternalFilesDir(null)}${path}config.cfg")
+            file.bufferedWriter().use{
+                it.write(time.toString())
+            }
+        }
         setToolbar()
         setMusicPlayer()
         setPlaylist()
@@ -202,12 +214,14 @@ class ArticleFragment(val path: String): Fragment() {
                     hideVideo()
                 }
                 R.id.showVideo -> {
-                    if (mediaPlayer!!.isPlaying) {
-                        mediaPlayer!!.pause()
-                        musicPause.visibility = GONE
-                        musicPlay.visibility = VISIBLE
+                    if(mediaPlayer != null) {
+                        if (mediaPlayer!!.isPlaying) {
+                            mediaPlayer!!.pause()
+                            musicPause.visibility = GONE
+                            musicPlay.visibility = VISIBLE
+                        }
+                        musicPlayer.visibility = GONE
                     }
-                    musicPlayer.visibility = GONE
                     viewPager.visibility = VISIBLE
                     it.isVisible = false
                     articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
@@ -282,13 +296,13 @@ class ArticleFragment(val path: String): Fragment() {
                 .toString()
         )
             .listVideo
+        viewPager.layoutParams.height = 0
         if (playlist != null) {
             if (playlist!!.isNotEmpty()) {
                 activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                 playlistProgressBar.max = playlist!!.size
                 playlistProgressBar.progressDrawable.colorFilter =
                     PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
-                viewPager.layoutParams.height = 0
                 viewPager.adapter =
                     VideoFragmentPagerAdapter(viewPager, playlist!!, childFragmentManager)
                 getHeight.post(heightRunnable)
@@ -324,7 +338,7 @@ class ArticleFragment(val path: String): Fragment() {
             }
         }
         pdfView.visibility = GONE
-        if (playlist != null) {
+        /*if (playlist != null) {
             if (playlist!!.isNotEmpty()) {
                 viewPager.visibility = VISIBLE
                 articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
@@ -332,12 +346,12 @@ class ArticleFragment(val path: String): Fragment() {
                     playlistProgressBar.visibility = VISIBLE
                 }
             }
-        }
+        }*/
     }
 
     private fun showTest() {
         val file =
-            File(StringBuilder(context!!.getExternalFilesDir(null).toString()).append(path).append("questions.json").toString())
+            File("${context!!.getExternalFilesDir(null)}${path}exercise.json")
         if (file.exists()) {
             val meta = Json(JsonConfiguration.Stable).parse(
                 QuestionMetadata.serializer().list,
@@ -387,6 +401,39 @@ class ArticleFragment(val path: String): Fragment() {
             playlistProgressBar.visibility = GONE
         }
         isFullScreen = false
+    }
+
+    private val broadcastReceiver = object : BroadcastReceiver() {
+
+        override fun onReceive(context: Context, _intent: Intent) {
+
+            if (_intent.action == path) {
+
+                val download = _intent.getParcelableExtra<Download>("download")
+                if (download!!.progress == 100) {
+                    val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
+                    bManager.unregisterReceiver(this)
+                }
+            }else{
+                val download = _intent.getParcelableExtra<Download>("download")
+                if (download!!.progress == 100) {
+
+                }
+            }
+        }
+    }
+
+    private fun getPodcast() {
+        val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
+        val intentFilter = IntentFilter()
+        intentFilter.addAction(path)
+
+        intent = Intent(context, DownloadService::class.java)
+        intent.putExtra("path", path)
+        intent.putExtra("token", activity!!.intent.getStringExtra("token"))
+
+        bManager.registerReceiver(broadcastReceiver, intentFilter)
+        activity!!.startService(intent)
     }
 
     private fun publishStat(stat: Statistic) {
@@ -555,6 +602,9 @@ class ArticleFragment(val path: String): Fragment() {
         timerHandler.removeCallbacks(timerRunnable)
         releaseMP()
         activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
+        bManager.unregisterReceiver(broadcastReceiver)
+        activity!!.stopService(intent)
         super.onDestroy()
     }
 }

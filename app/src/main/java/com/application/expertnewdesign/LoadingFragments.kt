@@ -98,6 +98,8 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
                 Thread().run{
                     val file = File("${activity!!.filesDir.path}/token.txt")
                     file.delete()
+                    val file2 = File("${activity!!.filesDir.path}/user.data")
+                    file2.delete()
                 }
                 val intent = Intent(activity, LoginActivity::class.java)
                 activity!!.startActivity(intent)
@@ -141,7 +143,7 @@ class MetadataLoadingFragment: Fragment(), Callback<MetadataNavigation>{
     }
 }
 
-class LessonLoadingFragment(val lessonPath: String): Fragment(){
+class LessonLoadingFragment(val lessonPath: String, time: Long = -1): Fragment(){
 
     lateinit var intent: Intent
 
@@ -214,8 +216,7 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
                         zipFile.delete()
 
                         fragmentManager!!.beginTransaction().run {
-                            add(R.id.fragment_container,
-                                ArticleFragment("$lessonPath/"), "article")
+                            add(R.id.fragment_container, ArticleFragment("$lessonPath/", time), "article")
                             hide(fragmentManager!!.findFragmentByTag("navigation")!!)
                             addToBackStack("lesson_stack")
                             commit()
@@ -233,9 +234,11 @@ class LessonLoadingFragment(val lessonPath: String): Fragment(){
                     if(loading_stat != null)
                         loading_stat.text =
                             String.format(
-                                "Загружено %d из %d МБ",
-                                download.currentFileSize/1000,
-                                download.totalFileSize/1000
+                                "Загружено %d,%d из %d,%d МБ",
+                                download.currentFileSize/1024,
+                                (download.currentFileSize/102)%10,
+                                download.totalFileSize/1024,
+                                (download.totalFileSize/102)%10
                             )
                 }
             }else{

@@ -32,8 +32,7 @@
                 android:id="@+id/tabs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
-                tools:visibility="visible"/>
+                android:visibility="gone" />
 
         <include android:id="@+id/musicPlayer"
                 android:layout_width="match_parent"
@@ -44,7 +43,8 @@
         <androidx.viewpager.widget.ViewPager
                 android:id="@+id/viewPager"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:background="#000000"/>
 
         <androidx.core.widget.ContentLoadingProgressBar
                 android:id="@+id/playlistProgressBar"

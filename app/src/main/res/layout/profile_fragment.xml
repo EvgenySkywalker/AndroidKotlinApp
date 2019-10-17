@@ -4,40 +4,40 @@
               android:layout_height="match_parent"
               android:background="@color/colorPrimary">
 
+    <LinearLayout
+      android:id="@+id/connection_stat"
+        android:orientation="vertical"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center_horizontal">
+
+        <ProgressBar
+          android:id="@+id/infinite_loading"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          style="@style/Widget.AppCompat.ProgressBar" />
+
+        <TextView
+          android:id="@+id/loading_stat"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:text="Получение информации..."
+          android:textAlignment="center"
+          android:textSize="20sp"
+          android:textColor="@color/colorTitle" />
+
+    </LinearLayout>
+
     <TableLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_alignParentTop="true"
+            android:layout_below="@id/connection_stat"
             android:layout_above="@id/button"
             android:paddingTop="20dp"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
             android:gravity="center_horizontal">
-
-        <TableRow>
-
-            <ProgressBar
-                    android:id="@+id/infinite_loading"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    style="@style/Widget.AppCompat.ProgressBar"
-                    android:layout_gravity="center"/>
-
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                    android:id="@+id/loading_stat"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Получение информации..."
-                    android:textSize="20sp"
-                    android:textColor="@color/colorTitle"
-                    android:layout_gravity="center"/>
-
-        </TableRow>
 
         <TableRow
                 android:id="@+id/profileUser"
