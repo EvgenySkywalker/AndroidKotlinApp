@@ -271,8 +271,11 @@ class DownloadService : IntentService("Download Service") {
     private lateinit var lessonPath: String
     private lateinit var token: String
     private var totalFileSize: Int = 0
+    private var intent: Intent? = null
 
     override fun onHandleIntent(intent: Intent?) {
+
+        this.intent = intent
 
         lessonPath = intent!!.getStringExtra("path")!!
         token = intent.getStringExtra("token")!!
@@ -301,10 +304,22 @@ class DownloadService : IntentService("Download Service") {
                 downloadFile(request.execute().body())
             } catch (e: TimeoutException) {
                 downloadError = true
+                if(intent != null){
+                    stopService(intent)
+                    intent = null
+                }
             } catch (i: IllegalStateException){
                 downloadError = true
+                if(intent != null){
+                    stopService(intent)
+                    intent = null
+                }
             } catch (c: ConnectException){
                 downloadError = true
+                if(intent != null){
+                    stopService(intent)
+                    intent = null
+                }
             }
     }
 

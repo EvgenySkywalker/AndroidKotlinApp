@@ -8,12 +8,6 @@
             android:title="На весь экран"
             android:visible="false"/>
 
-      <item android:id="@+id/playAudio"
-              android:icon="@drawable/ic_action_player"
-              app:showAsAction="always"
-              android:title="Подкаст"
-              android:visible="false"/>
-
       <item android:id="@+id/hideVideo"
             android:icon="@drawable/ic_action_article_hide"
             app:showAsAction="always"
@@ -21,10 +15,22 @@
             android:visible="false"/>
 
       <item android:id="@+id/showVideo"
-            android:icon="@drawable/ic_action_article_show"
-            app:showAsAction="always"
-            android:title="Показать видео"
-            android:visible="false"/>
+        android:icon="@drawable/ic_action_article_show"
+        app:showAsAction="always"
+        android:title="Показать видео"
+        android:visible="false"/>
+
+      <item android:id="@+id/playAudio"
+        android:icon="@drawable/ic_action_player"
+        app:showAsAction="always"
+        android:title="Подкаст"
+        android:visible="false"/>
+
+      <item android:id="@+id/loadingAudio"
+        android:icon="@drawable/ic_action_load_podcast"
+        app:showAsAction="always"
+        android:title="Загрузка подкаста..."
+        android:visible="false"/>
 
       <item android:id="@+id/toTest"
             app:showAsAction="ifRoom"

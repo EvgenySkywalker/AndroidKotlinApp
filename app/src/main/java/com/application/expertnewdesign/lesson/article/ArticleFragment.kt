@@ -43,6 +43,7 @@ import kotlinx.android.synthetic.main.test_fragment.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.list
+import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -55,6 +56,7 @@ import retrofit2.http.Query
 import java.io.File
 import java.lang.StringBuilder
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 interface ExamAPI{
     @GET("getExamTime")
@@ -64,12 +66,29 @@ interface ExamAPI{
                 @Query("lesson") lesson: String): Call<ResponseBody>
 }
 
+interface PodcastAPI{
+    @GET("probePodcast")
+    fun probPodcast(@Header("Authorization") token: String,
+                @Query("course") subject: String,
+                @Query("subject") topic: String,
+                @Query("lesson") lesson: String): Call<ResponseBody>
+}
+
+interface LoadAPI{
+    @GET("getPodcast")
+    fun loadPodcast(@Header("Authorization") token: String,
+                    @Query("course") subject: String,
+                    @Query("subject") topic: String,
+                    @Query("lesson") lesson: String): Call<ResponseBody>
+}
+
 class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
 
     lateinit var intent: Intent
     private var mediaPlayer: MediaPlayer? = null
     private var audioManager: AudioManager? = null
 
+    var isAudioExist = false
     private var duration: Int = 0
     private var lastSeekTime: Long = 0
     val timerHandler = Handler()
@@ -142,17 +161,13 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if(time.compareTo(-1) != 0){
-            val file = File("${activity!!.getExternalFilesDir(null)}${path}config.cfg")
-            file.bufferedWriter().use{
-                it.write(time.toString())
-            }
-        }
+        lessonCashed()
         setToolbar()
         setMusicPlayer()
         setPlaylist()
         setPdf()
         showTest()
+        podcastExist()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -173,6 +188,15 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
         }
     }
 
+    private fun lessonCashed(){
+        if(time.compareTo(-1) != 0){
+            val file = File("${activity!!.getExternalFilesDir(null)}${path}config.cfg")
+            file.bufferedWriter().use{
+                it.write(time.toString())
+            }
+        }
+    }
+
     private fun setToolbar() {
         articleToolbar.inflateMenu(R.menu.article)
         articleBack.setOnClickListener {
@@ -182,22 +206,29 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
         articleToolbar.setOnMenuItemClickListener {
             when (it!!.itemId) {
                 R.id.playAudio -> {
-                    hideVideo()
-                    if (mediaPlayer == null) {
-                        mediaPlayer = MediaPlayer()
-                        mediaPlayer!!.setDataSource("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3")
-                        mediaPlayer!!.prepare()
-                        mediaPlayer!!.start()
-                        musicPlayer.visibility = VISIBLE
-                        duration = mediaPlayer!!.duration
-                        timerHandler.post(timerRunnable)
-                    } else {
-                        if (musicPlayer.visibility == GONE) {
+                    if(isAudioExist) {
+                        hideVideo()
+                        if (mediaPlayer == null) {
+                            mediaPlayer = MediaPlayer()
+                            mediaPlayer!!.setDataSource("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3")
+                            mediaPlayer!!.prepare()
+                            mediaPlayer!!.start()
                             musicPlayer.visibility = VISIBLE
+                            duration = mediaPlayer!!.duration
+                            timerHandler.post(timerRunnable)
                         } else {
-                            musicPlayer.visibility = GONE
+                            if (musicPlayer.visibility == GONE) {
+                                musicPlayer.visibility = VISIBLE
+                            } else {
+                                musicPlayer.visibility = GONE
+                            }
                         }
+                    }else{
+                        showAudioLoadAlert()
                     }
+                }
+                R.id.loadingAudio->{
+                    Toast.makeText(context, "Подкаст загружается...", Toast.LENGTH_SHORT).show()
                 }
                 R.id.toTest -> {
                     if (viewPager.adapter != null) {
@@ -244,49 +275,45 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
     }
 
     private fun setMusicPlayer() {
-        audioManager = activity!!.getSystemService(AUDIO_SERVICE) as AudioManager
-        progress.progressDrawable.colorFilter =
-            PorterDuffColorFilter(Color.RED, PorterDuff.Mode.SRC_IN)
+            audioManager = activity!!.getSystemService(AUDIO_SERVICE) as AudioManager
+            progress.progressDrawable.colorFilter =
+                PorterDuffColorFilter(Color.RED, PorterDuff.Mode.SRC_IN)
 
-        if (File("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3").exists()) {
-            articleToolbar.menu.findItem(R.id.playAudio).isVisible = true
-        }
-
-        musicPause.setOnClickListener {
-            if (mediaPlayer!!.isPlaying) {
-                mediaPlayer!!.pause()
+            musicPause.setOnClickListener {
+                if (mediaPlayer!!.isPlaying) {
+                    mediaPlayer!!.pause()
+                }
+                musicPause.visibility = GONE
+                musicPlay.visibility = VISIBLE
             }
-            musicPause.visibility = GONE
-            musicPlay.visibility = VISIBLE
-        }
 
-        musicPlay.setOnClickListener {
-            if (!mediaPlayer!!.isPlaying) {
-                mediaPlayer!!.start()
+            musicPlay.setOnClickListener {
+                if (!mediaPlayer!!.isPlaying) {
+                    mediaPlayer!!.start()
+                }
+                musicPause.visibility = VISIBLE
+                musicPlay.visibility = GONE
             }
-            musicPause.visibility = VISIBLE
-            musicPlay.visibility = GONE
-        }
 
-        musicBackward.setOnClickListener {
-            val currentTime = Calendar.getInstance().timeInMillis
-            if (currentTime - lastSeekTime > 500) {
-                mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition - 5000)
-            } else {
-                mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition - 12000)
+            musicBackward.setOnClickListener {
+                val currentTime = Calendar.getInstance().timeInMillis
+                if (currentTime - lastSeekTime > 500) {
+                    mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition - 5000)
+                } else {
+                    mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition - 12000)
+                }
+                lastSeekTime = currentTime
             }
-            lastSeekTime = currentTime
-        }
 
-        musicForward.setOnClickListener {
-            val currentTime = Calendar.getInstance().timeInMillis
-            if (currentTime - lastSeekTime > 500) {
-                mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition + 5000)
-            } else {
-                mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition + 12000)
+            musicForward.setOnClickListener {
+                val currentTime = Calendar.getInstance().timeInMillis
+                if (currentTime - lastSeekTime > 500) {
+                    mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition + 5000)
+                } else {
+                    mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition + 12000)
+                }
+                lastSeekTime = currentTime
             }
-            lastSeekTime = currentTime
-        }
     }
 
     private fun setPlaylist() {
@@ -326,6 +353,84 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
         }
     }
 
+    private fun podcastExist(){
+        if (File("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3").exists()) {
+            articleToolbar.menu.findItem(R.id.playAudio).isVisible = true
+            isAudioExist = true
+        }else {
+            val retrofit = Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .build()
+
+            val podcastAPI = retrofit.create(PodcastAPI::class.java)
+            val (_, subject, topic, lesson) = path.split("/")
+            val token = activity!!.intent.getStringExtra("token")!!
+            podcastAPI.probPodcast("Token $token", subject, topic, lesson).enqueue(
+                object : Callback<ResponseBody> {
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        if (response.isSuccessful) {
+                            articleToolbar.menu.findItem(R.id.playAudio).isVisible = true
+                        }
+                    }
+
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+
+                    }
+                }
+            )
+        }
+    }
+
+    private fun loadPodcast(){
+        articleToolbar.menu.findItem(R.id.playAudio).isVisible = false
+        articleToolbar.menu.findItem(R.id.loadingAudio).isVisible = true
+
+        val innerClient = OkHttpClient.Builder()
+            .connectTimeout(0, TimeUnit.MINUTES)
+            .readTimeout(1, TimeUnit.MINUTES)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(innerClient)
+            .build()
+
+        val loadAPI = retrofit.create(LoadAPI::class.java)
+        val (_, subject, topic, lesson) = path.split("/")
+        val token = activity!!.intent.getStringExtra("token")!!
+        loadAPI.loadPodcast("Token $token", subject, topic, lesson).enqueue(
+            object : Callback<ResponseBody> {
+                override fun onResponse(
+                    call: Call<ResponseBody>,
+                    response: Response<ResponseBody>
+                ) {
+                    if (response.isSuccessful) {
+                        Thread().run{
+                            val file = File("${activity!!.getExternalFilesDir(null)}${path}podcast.mp3")
+                            response.body().byteStream().use{ input->
+                                file.outputStream().use{ fileOutput->
+                                    input.copyTo(fileOutput)
+                                }
+                            }
+                            isAudioExist = true
+                            activity!!.runOnUiThread {
+                                articleToolbar.menu.findItem(R.id.playAudio).isVisible = true
+                                articleToolbar.menu.findItem(R.id.loadingAudio).isVisible = false
+                            }
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    articleToolbar.menu.findItem(R.id.loadingAudio).isVisible = false
+                }
+            }
+        )
+    }
+
     private fun setPdf() {
         val pdf = File("${context!!.getExternalFilesDir(null)}${path}article.pdf")
         if (pdf.exists()) {
@@ -338,15 +443,6 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
             }
         }
         pdfView.visibility = GONE
-        /*if (playlist != null) {
-            if (playlist!!.isNotEmpty()) {
-                viewPager.visibility = VISIBLE
-                articleToolbar.menu.findItem(R.id.hideVideo).isVisible = true
-                if (playlistProgressBar.max > 1) {
-                    playlistProgressBar.visibility = VISIBLE
-                }
-            }
-        }*/
     }
 
     private fun showTest() {
@@ -403,7 +499,7 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
         isFullScreen = false
     }
 
-    private val broadcastReceiver = object : BroadcastReceiver() {
+    /*private val broadcastReceiver = object : BroadcastReceiver() {
 
         override fun onReceive(context: Context, _intent: Intent) {
 
@@ -421,9 +517,9 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
                 }
             }
         }
-    }
+    }*/
 
-    private fun getPodcast() {
+    /*private fun getPodcast() {
         val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
         val intentFilter = IntentFilter()
         intentFilter.addAction(path)
@@ -434,7 +530,7 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
 
         bManager.registerReceiver(broadcastReceiver, intentFilter)
         activity!!.startService(intent)
-    }
+    }*/
 
     private fun publishStat(stat: Statistic) {
         val profileFragment =
@@ -520,7 +616,30 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
             }
         val alert = builder.create()
         alert.show()
-        val positiveButton = alert.getButton(AlertDialog.BUTTON_NEUTRAL)
+        val positiveButton = alert.getButton(AlertDialog.BUTTON_POSITIVE)
+        val parent = positiveButton.parent as LinearLayout
+        parent.gravity = Gravity.CENTER_HORIZONTAL
+        parent.setPadding(0, 0, 0, 20)
+        val leftSpacer = parent.getChildAt(1)
+        leftSpacer.visibility = GONE
+    }
+
+    private fun showAudioLoadAlert(){
+        val builder = AlertDialog.Builder(context)
+        builder.setTitle("Подкаст")
+            .setMessage("""Вы можете загрузить подкаст
+                 |для прослушивания
+            """.trimMargin())
+            .setPositiveButton("Загрузка") { dialog, _ ->
+                dialog.cancel()
+                loadPodcast()
+            }
+            .setNegativeButton("Отмена") { dialog, _ ->
+                dialog.cancel()
+            }
+        val alert = builder.create()
+        alert.show()
+        val positiveButton = alert.getButton(AlertDialog.BUTTON_POSITIVE)
         val parent = positiveButton.parent as LinearLayout
         parent.gravity = Gravity.CENTER_HORIZONTAL
         parent.setPadding(0, 0, 0, 20)
@@ -602,9 +721,9 @@ class ArticleFragment(val path: String, val time: Long = -1): Fragment() {
         timerHandler.removeCallbacks(timerRunnable)
         releaseMP()
         activity!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
-        val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
+        /*val bManager = LocalBroadcastManager.getInstance(activity!!.applicationContext)
         bManager.unregisterReceiver(broadcastReceiver)
-        activity!!.stopService(intent)
+        activity!!.stopService(intent)*/
         super.onDestroy()
     }
 }
